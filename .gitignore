@@ -1,0 +1,24 @@
+# Xcode user settings (keeps your window layouts and open tabs private)
+xcuserdata/
+
+# Build artifacts and local derived data
+DerivedData/
+build/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Playground workspaces
+timeline.xctimeline
+playground.xcworkspace
+
+# macOS system files
+.DS_Store
+Files.localized
+
+# Swift Package Manager local builds
+.build/
+
+# CocoaPods (uncomment if you want to exclude downloaded dependencies)
+# Pods/
