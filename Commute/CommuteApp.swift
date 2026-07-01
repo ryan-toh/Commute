@@ -22,11 +22,13 @@ struct CommuteApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
-
+    
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+//            ContentView()
+            CyclingPathView()
         }
-        .modelContainer(sharedModelContainer)
+//        .modelContainer(sharedModelContainer)
     }
 }
