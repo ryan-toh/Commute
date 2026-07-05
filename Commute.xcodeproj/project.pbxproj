@@ -40,7 +40,7 @@
 			path = CommuteUITests;
 			sourceTree = "<group>";
 		};
-		78D81BEF2FEF7B5900A34D2E /* Commute */ = {
+		783734102FF903A3001F0B1F /* Commute */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Commute;
 			sourceTree = "<group>";
@@ -75,10 +75,10 @@
 		7814DACE2FEECBFA0062AB24 = {
 			isa = PBXGroup;
 			children = (
-				78D81BEF2FEF7B5900A34D2E /* Commute */,
 				7814DAE92FEECBFB0062AB24 /* CommuteTests */,
 				7814DAF32FEECBFB0062AB24 /* CommuteUITests */,
 				7814DAD82FEECBFA0062AB24 /* Products */,
+				783734102FF903A3001F0B1F /* Commute */,
 			);
 			sourceTree = "<group>";
 		};
@@ -108,7 +108,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				78D81BEF2FEF7B5900A34D2E /* Commute */,
+				783734102FF903A3001F0B1F /* Commute */,
 			);
 			name = Commute;
 			packageProductDependencies = (
@@ -398,6 +398,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "To show yourself on the bike map.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -443,6 +444,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "To show yourself on the bike map.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

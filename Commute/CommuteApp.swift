@@ -26,9 +26,9 @@ struct CommuteApp: App {
     
     var body: some Scene {
         WindowGroup {
-//            ContentView()
             CyclingPathView()
         }
-//        .modelContainer(sharedModelContainer)
+        .modelContainer(for: [BikeParkingLocation.self])
+
     }
 }
