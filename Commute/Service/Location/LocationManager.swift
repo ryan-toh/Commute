@@ -17,6 +17,7 @@ final class LocationManager: LocationProvider {
 
     private let manager = CLLocationManager()
     private var updateTask: Task<Void, Never>?
+    private var updateID: UUID?
     private var subscribers: [UUID: AsyncThrowingStream<Location, Error>.Continuation] = [:]
 
     init() {
@@ -35,6 +36,13 @@ final class LocationManager: LocationProvider {
     func locationStream() -> AsyncThrowingStream<Location, Error> {
         refreshAuthorizationStatus()
 
+        switch canAccessUserLocation {
+        case .denied, .restricted:
+            return AsyncThrowingStream { $0.finish() }
+        case .notDetermined, .authorized:
+            break
+        }
+
         return AsyncThrowingStream { continuation in
             let subscriberID = UUID()
             subscribers[subscriberID] = continuation
@@ -51,19 +59,34 @@ final class LocationManager: LocationProvider {
     private func startUpdatesIfNeeded() {
         guard updateTask == nil else { return }
 
+        let updateID = UUID()
+        self.updateID = updateID
         updateTask = Task { [weak self] in
             guard let self else { return }
             await requestPermission()
-            await consumeLocationUpdates()
+            await consumeLocationUpdates(updateID: updateID)
         }
     }
 
-    private func consumeLocationUpdates() async {
-        defer { updateTask = nil }
+    private func consumeLocationUpdates(updateID: UUID) async {
+        defer {
+            if self.updateID == updateID {
+                self.updateTask = nil
+                self.updateID = nil
+            }
+        }
 
         do {
             for try await update in CLLocationUpdate.liveUpdates() {
                 updateAuthorization(for: update)
+
+                switch canAccessUserLocation {
+                case .denied, .restricted:
+                    finishSubscribers()
+                    return
+                case .notDetermined, .authorized:
+                    break
+                }
 
                 guard let location = makeLocation(from: update) else { continue }
                 broadcast(location)
@@ -82,6 +105,7 @@ final class LocationManager: LocationProvider {
     private func removeSubscriber(withID id: UUID) {
         subscribers[id] = nil
         guard subscribers.isEmpty else { return }
+        updateID = nil
         updateTask?.cancel()
         updateTask = nil
     }
@@ -119,7 +143,7 @@ final class LocationManager: LocationProvider {
                 longitude: location.coordinate.longitude
             ),
             address: nil,
-            name: "Current Location",
+            name: Preferences.LocationService.currentLocationName,
             source: .gps,
             capturedAt: location.timestamp
         )

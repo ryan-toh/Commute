@@ -1,59 +1,62 @@
 import Foundation
 
-protocol RouteProgressCalculating {
-    func progress(on route: Route, at location: Location) -> RouteProgress?
-}
-
-struct RouteProgressCalculator: RouteProgressCalculating {
-    func progress(on route: Route, at location: Location) -> RouteProgress? {
+struct RouteProgressCalculator: RouteProgressCalculatorService {
+    func progress(
+        on route: Route,
+        at location: Location,
+        after minimumRouteCoordinatePosition: Double?
+    ) -> RouteProgress? {
         guard route.coordinates.count >= 2 else { return nil }
 
         let segments = route.coordinates.indices.dropLast().map {
             RouteSegment(start: route.coordinates[$0], end: route.coordinates[$0 + 1])
         }
-        guard let closest = closestProjection(to: location.coordinate, on: segments) else { return nil }
+        guard let closest = closestProjection(
+            to: location.coordinate,
+            on: segments,
+            after: minimumRouteCoordinatePosition
+        ) else { return nil }
 
         let completedDistance = segments.prefix(closest.segmentIndex)
             .reduce(0) { $0 + $1.lengthMeters } + closest.distanceAlongSegmentMeters
+        let totalRouteDistance = segments.reduce(0) { $0 + $1.lengthMeters }
         let currentStepIndex = stepIndex(
-            for: completedDistance,
-            route: route,
-            segments: segments
+            for: closest.routeCoordinatePosition,
+            route: route
         )
 
         return RouteProgress(
             nearestRouteCoordinate: closest.coordinate,
             distanceFromRouteMeters: closest.distanceMeters,
             completedDistanceMeters: completedDistance,
-            remainingDistanceMeters: max(0, route.distanceMeters - completedDistance),
-            currentStepIndex: currentStepIndex
+            remainingDistanceMeters: max(0, totalRouteDistance - completedDistance),
+            currentStepIndex: currentStepIndex,
+            routeCoordinatePosition: closest.routeCoordinatePosition
         )
     }
 
     private func closestProjection(
         to coordinate: LocationCoordinate,
-        on segments: [RouteSegment]
+        on segments: [RouteSegment],
+        after minimumRouteCoordinatePosition: Double?
     ) -> RouteProjection? {
         segments.enumerated().compactMap { index, segment in
             segment.project(coordinate, segmentIndex: index)
+        }
+        .filter { projection in
+            guard let minimumRouteCoordinatePosition else { return true }
+            return projection.routeCoordinatePosition >= minimumRouteCoordinatePosition
         }
         .min(by: { $0.distanceMeters < $1.distanceMeters })
     }
 
     private func stepIndex(
-        for completedDistance: Double,
-        route: Route,
-        segments: [RouteSegment]
+        for routeCoordinatePosition: Double,
+        route: Route
     ) -> Int {
-        route.steps.enumerated().last { index, _ in
-            distanceAlongRoute(to: route.steps[index].coordinate, segments: segments) <= completedDistance
+        route.steps.enumerated().last { _, step in
+            Double(step.routeCoordinateIndex) <= routeCoordinatePosition
         }?.offset ?? 0
-    }
-
-    private func distanceAlongRoute(to coordinate: LocationCoordinate, segments: [RouteSegment]) -> Double {
-        guard let closest = closestProjection(to: coordinate, on: segments) else { return 0 }
-        return segments.prefix(closest.segmentIndex).reduce(0) { $0 + $1.lengthMeters }
-            + closest.distanceAlongSegmentMeters
     }
 }
 
@@ -85,7 +88,8 @@ private struct RouteSegment {
             coordinate: projectedCoordinate,
             distanceMeters: hypot(projectedPoint.x, projectedPoint.y),
             distanceAlongSegmentMeters: lengthMeters * projectionFactor,
-            segmentIndex: segmentIndex
+            segmentIndex: segmentIndex,
+            routeCoordinatePosition: Double(segmentIndex) + projectionFactor
         )
     }
 
@@ -117,6 +121,7 @@ private struct RouteProjection {
     let distanceMeters: Double
     let distanceAlongSegmentMeters: Double
     let segmentIndex: Int
+    let routeCoordinatePosition: Double
 }
 
 private extension Double {

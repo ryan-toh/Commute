@@ -22,7 +22,5 @@ struct RecenterButton: View {
 }
 
 #Preview {
-    RecenterButton {
-        print("Hello")
-    }
+    RecenterButton {}
 }

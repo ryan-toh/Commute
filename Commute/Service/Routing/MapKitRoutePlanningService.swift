@@ -35,25 +35,43 @@ final class MapKitRoutePlanningService: RoutePlanningService {
     }
 
     private func makeNavigationRoute(from route: MKRoute) -> Route {
-        Route(
+        let routeCoordinates = coordinates(from: route.polyline)
+
+        return Route(
             id: UUID(),
-            coordinates: coordinates(from: route.polyline),
-            steps: route.steps.map(makeNavigationStep),
+            coordinates: routeCoordinates,
+            steps: makeNavigationSteps(from: route.steps, routeCoordinates: routeCoordinates),
             distanceMeters: route.distance,
             expectedTravelTime: route.expectedTravelTime,
             transportMode: .cycling
         )
     }
 
-    private func makeNavigationStep(from step: MKRoute.Step) -> RouteStep {
-        RouteStep(
-            id: UUID(),
-            instruction: step.instructions.isEmpty ? "Continue" : step.instructions,
-            distanceMeters: step.distance,
-            coordinate: coordinate(from: step.polyline.coordinate),
-            transportMode: .cycling,
-            source: .mapKit
-        )
+    private func makeNavigationSteps(
+        from steps: [MKRoute.Step],
+        routeCoordinates: [LocationCoordinate]
+    ) -> [RouteStep] {
+        var searchStartIndex = 0
+
+        return steps.map { step in
+            let stepCoordinate = finalCoordinate(from: step.polyline)
+            let routeCoordinateIndex = nearestRouteCoordinateIndex(
+                to: stepCoordinate,
+                in: routeCoordinates,
+                startingAt: searchStartIndex
+            )
+            searchStartIndex = routeCoordinateIndex
+
+            return RouteStep(
+                id: UUID(),
+                instruction: step.instructions.isEmpty ? Preferences.RoutePlanning.fallbackInstruction : step.instructions,
+                distanceMeters: step.distance,
+                coordinate: stepCoordinate,
+                routeCoordinateIndex: routeCoordinateIndex,
+                transportMode: .cycling,
+                source: .mapKit
+            )
+        }
     }
 
     private func coordinates(from polyline: MKPolyline) -> [LocationCoordinate] {
@@ -66,6 +84,37 @@ final class MapKitRoutePlanningService: RoutePlanningService {
             range: NSRange(location: 0, length: polyline.pointCount)
         )
         return coordinates.map(coordinate(from:))
+    }
+
+    private func finalCoordinate(from polyline: MKPolyline) -> LocationCoordinate {
+        guard polyline.pointCount > 0 else { return coordinate(from: polyline.coordinate) }
+
+        var finalMapCoordinate = kCLLocationCoordinate2DInvalid
+        polyline.getCoordinates(
+            &finalMapCoordinate,
+            range: NSRange(location: polyline.pointCount - 1, length: 1)
+        )
+        return coordinate(from: finalMapCoordinate)
+    }
+
+    private func nearestRouteCoordinateIndex(
+        to target: LocationCoordinate,
+        in routeCoordinates: [LocationCoordinate],
+        startingAt startIndex: Int
+    ) -> Int {
+        guard !routeCoordinates.isEmpty else { return 0 }
+
+        let clampedStartIndex = min(max(startIndex, 0), routeCoordinates.count - 1)
+        return routeCoordinates.indices
+            .dropFirst(clampedStartIndex)
+            .min { coordinateDistanceSquared(routeCoordinates[$0], target) < coordinateDistanceSquared(routeCoordinates[$1], target) }
+            ?? clampedStartIndex
+    }
+
+    private func coordinateDistanceSquared(_ first: LocationCoordinate, _ second: LocationCoordinate) -> Double {
+        let latitudeDelta = first.latitude - second.latitude
+        let longitudeDelta = first.longitude - second.longitude
+        return latitudeDelta * latitudeDelta + longitudeDelta * longitudeDelta
     }
 
     private func coordinate(from coordinate: CLLocationCoordinate2D) -> LocationCoordinate {

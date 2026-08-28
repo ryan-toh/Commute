@@ -1,0 +1,8 @@
+import SwiftUI
+
+/// Indicates that route planning is in progress.
+struct RoutePlanningProgressView: View {
+    var body: some View {
+        ProgressView(Preferences.NavigationUI.planningRoute)
+    }
+}

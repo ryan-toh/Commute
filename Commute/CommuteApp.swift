@@ -12,17 +12,17 @@ import Observation
 struct CommuteApp: App {
     @State private var locationManager: LocationManager
     @State private var userLocationViewModel: UserLocationViewModel
-    @State private var navigationViewModel: NavigationRouteViewModel
-    @State private var navigationSessionViewModel: NavigationSessionViewModel
+    @State private var navigationViewModel: RoutePlanningViewModel
+    @State private var navigationSessionViewModel: RouteNavigationViewModel
 
     init() {
         let locationManager = LocationManager()
         let userLocationViewModel = UserLocationViewModel()
         let routePlanningService = MapKitRoutePlanningService()
-        let navigationViewModel = NavigationRouteViewModel(
+        let navigationViewModel = RoutePlanningViewModel(
             routePlanningService: routePlanningService
         )
-        let navigationSessionViewModel = NavigationSessionViewModel(
+        let navigationSessionViewModel = RouteNavigationViewModel(
             routePlanningService: routePlanningService,
             routeProgressCalculator: RouteProgressCalculator()
         )

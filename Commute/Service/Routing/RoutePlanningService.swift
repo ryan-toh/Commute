@@ -13,7 +13,7 @@ enum RoutePlanningError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noRouteFound:
-            "No cycling route is available for this destination."
+            Preferences.RoutePlanning.noRouteFoundMessage
         }
     }
 }

@@ -18,3 +18,17 @@ protocol LocationProvider {
 enum LocationAuthorizationStatus {
     case notDetermined, restricted, denied, authorized
 }
+
+enum LocationAccessError: LocalizedError {
+    case unavailable
+    case denied
+
+    var errorDescription: String? {
+        switch self {
+        case .unavailable:
+            Preferences.LocationService.locationUnavailableMessage
+        case .denied:
+            Preferences.LocationService.locationAccessDeniedMessage
+        }
+    }
+}

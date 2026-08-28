@@ -10,10 +10,3 @@ struct RouteState {
     let navigationError: Error?
     let hasPlannedRoute: Bool
 }
-
-@MainActor
-struct NavigationControls {
-    let planRoute: (Location) -> Void
-    let startNavigation: () -> Void
-    let stopNavigation: () -> Void
-}

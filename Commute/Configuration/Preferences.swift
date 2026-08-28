@@ -1,6 +1,7 @@
 import CoreGraphics
 import CoreLocation
 import Foundation
+import SwiftUI
 
 enum Preferences {
     enum Location {
@@ -13,6 +14,12 @@ enum Preferences {
         static let haloScale: CGFloat = 2.6
         static let maximumHaloSize: CGFloat = 48
         static let maximumDotSize: CGFloat = 22
+        static let haloColor = Color.blue.opacity(0.18)
+        static let dotColor = Color.blue
+        static let borderColor = Color.white
+        static let borderWidth: CGFloat = 3
+        static let shadowColor = Color.black.opacity(0.25)
+        static let shadowRadius: CGFloat = 2
     }
 
     enum NavigationUI {
@@ -32,9 +39,22 @@ enum Preferences {
         static let rerouting = "Finding a safer route…"
         static let arrived = "You have arrived"
         static let remainingDistanceFormat = "%.0f m remaining"
+        static let stepDistanceFormat = "%.0f m"
         static let destinationSymbol = "mappin.circle.fill"
         static let recenterSymbol = "location.fill"
         static let nextStepSymbol = "arrow.turn.up.right"
+        static let arrivedSymbol = "checkmark.circle.fill"
+    }
+
+    enum LocationService {
+        static let currentLocationName = "Current Location"
+        static let locationUnavailableMessage = "Your current location is unavailable."
+        static let locationAccessDeniedMessage = "Allow location access to plan a route."
+    }
+
+    enum RoutePlanning {
+        static let fallbackInstruction = "Continue"
+        static let noRouteFoundMessage = "No cycling route is available for this destination."
     }
 
     enum NavigationSession {

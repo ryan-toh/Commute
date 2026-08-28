@@ -3,7 +3,7 @@ import Observation
 
 @MainActor
 @Observable
-final class NavigationSessionViewModel {
+final class RouteNavigationViewModel {
     private(set) var destination: Location?
     private(set) var activeRoute: Route?
     private(set) var state: UserRouteState = .idle
@@ -11,13 +11,14 @@ final class NavigationSessionViewModel {
     private(set) var navigationError: Error?
 
     private let routePlanningService: any RoutePlanningService
-    private let routeProgressCalculator: any RouteProgressCalculating
+    private let routeProgressCalculator: any RouteProgressCalculatorService
     private var monitoringTask: Task<Void, Never>?
+    private var monitoringID: UUID?
     private var lastRerouteDate: Date?
 
     init(
         routePlanningService: any RoutePlanningService,
-        routeProgressCalculator: any RouteProgressCalculating
+        routeProgressCalculator: any RouteProgressCalculatorService
     ) {
         self.routePlanningService = routePlanningService
         self.routeProgressCalculator = routeProgressCalculator
@@ -35,27 +36,35 @@ final class NavigationSessionViewModel {
         activeRoute = nil
         progress = nil
         navigationError = nil
+        lastRerouteDate = nil
         state = .idle
     }
 
     func prepare(route: Route) {
+        stopNavigation()
         activeRoute = route
         progress = nil
         navigationError = nil
+        lastRerouteDate = nil
         state = .idle
     }
 
     func startNavigation(using locationProvider: LocationProvider) {
         guard activeRoute != nil, destination != nil, monitoringTask == nil else { return }
+        progress = nil
+        lastRerouteDate = nil
         state = .following
         navigationError = nil
 
+        let monitoringID = UUID()
+        self.monitoringID = monitoringID
         monitoringTask = Task { [weak self] in
-            await self?.monitorLocation(using: locationProvider)
+            await self?.monitorLocation(using: locationProvider, monitoringID: monitoringID)
         }
     }
 
     func stopNavigation() {
+        monitoringID = nil
         monitoringTask?.cancel()
         monitoringTask = nil
 
@@ -64,36 +73,51 @@ final class NavigationSessionViewModel {
         }
     }
 
-    private func monitorLocation(using locationProvider: LocationProvider) async {
-        defer { monitoringTask = nil }
+    private func monitorLocation(using locationProvider: LocationProvider, monitoringID: UUID) async {
+        defer {
+            if self.monitoringID == monitoringID {
+                self.monitoringTask = nil
+                self.monitoringID = nil
+            }
+        }
 
         do {
             for try await location in locationProvider.locationStream() {
-                await updateNavigation(for: location)
+                guard await updateNavigation(for: location, monitoringID: monitoringID) else { return }
             }
+            guard self.monitoringID == monitoringID, !Task.isCancelled else { return }
+            navigationError = locationAccessError(for: locationProvider)
+            state = .failed
         } catch is CancellationError {
             // Stopping navigation intentionally cancels this task.
         } catch {
+            guard self.monitoringID == monitoringID else { return }
             navigationError = error
             state = .failed
         }
     }
 
-    private func updateNavigation(for location: Location) async {
-        guard let activeRoute else { return }
-        guard let routeProgress = routeProgressCalculator.progress(on: activeRoute, at: location) else { return }
+    private func updateNavigation(for location: Location, monitoringID: UUID) async -> Bool {
+        guard self.monitoringID == monitoringID, !Task.isCancelled else { return false }
+        guard let activeRoute else { return false }
+        guard let routeProgress = routeProgressCalculator.progress(
+            on: activeRoute,
+            at: location,
+            after: progress?.routeCoordinatePosition
+        ) else { return true }
 
         progress = routeProgress
 
         if routeProgress.remainingDistanceMeters <= Preferences.NavigationSession.arrivalThresholdMeters {
             state = .arrived
             stopNavigation()
-            return
+            return false
         }
 
-        guard routeProgress.distanceFromRouteMeters > Preferences.NavigationSession.offRouteThresholdMeters else { return }
-        guard state == .following, canReroute else { return }
-        await reroute(from: location)
+        guard routeProgress.distanceFromRouteMeters > Preferences.NavigationSession.offRouteThresholdMeters else { return true }
+        guard state == .following, canReroute else { return true }
+        await reroute(from: location, monitoringID: monitoringID)
+        return state != .failed
     }
 
     private var canReroute: Bool {
@@ -101,28 +125,33 @@ final class NavigationSessionViewModel {
         return Date.now.timeIntervalSince(lastRerouteDate) >= Preferences.NavigationSession.minimumRerouteInterval
     }
 
-    private func reroute(from origin: Location) async {
+    private func reroute(from origin: Location, monitoringID: UUID) async {
         guard let destination else { return }
 
         state = .rerouting
         lastRerouteDate = .now
 
         do {
-            activeRoute = try await routePlanningService.planCyclingRoute(from: origin, to: destination)
+            let reroutedRoute = try await routePlanningService.planCyclingRoute(from: origin, to: destination)
+            guard self.monitoringID == monitoringID, !Task.isCancelled else { return }
+
+            activeRoute = reroutedRoute
             progress = nil
             state = .following
         } catch {
+            guard self.monitoringID == monitoringID, !Task.isCancelled else { return }
+
             navigationError = error
             state = .failed
         }
     }
-}
 
-enum UserRouteState: Equatable {
-    case idle
-    case following
-    case rerouting
-    case arrived
-    case stopped
-    case failed
+    private func locationAccessError(for provider: LocationProvider) -> LocationAccessError {
+        switch provider.canAccessUserLocation {
+        case .denied, .restricted:
+            .denied
+        case .notDetermined, .authorized:
+            .unavailable
+        }
+    }
 }

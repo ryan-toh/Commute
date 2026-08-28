@@ -19,10 +19,11 @@ final class MapViewModel {
 
     func recenter(
         on coordinate: LocationCoordinate?,
-        requestingUserLocation: () async -> Void
+        requestingUserLocation: () async -> LocationCoordinate?
     ) async {
         guard let coordinate else {
-            await requestingUserLocation()
+            guard let coordinate = await requestingUserLocation() else { return }
+            recenter(on: coordinate)
             return
         }
 

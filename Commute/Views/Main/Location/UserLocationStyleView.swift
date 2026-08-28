@@ -14,7 +14,7 @@ struct UserLocationStyleView: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(.blue.opacity(0.18))
+                .fill(Preferences.UserLocationMarker.haloColor)
                 .frame(
                     width: min(dotSize * Preferences.UserLocationMarker.haloScale,
                                Preferences.UserLocationMarker.maximumHaloSize),
@@ -23,15 +23,21 @@ struct UserLocationStyleView: View {
                 )
 
             Circle()
-                .fill(.blue)
+                .fill(Preferences.UserLocationMarker.dotColor)
                 .frame(
                     width: min(dotSize, Preferences.UserLocationMarker.maximumDotSize),
                     height: min(dotSize, Preferences.UserLocationMarker.maximumDotSize)
                 )
                 .overlay {
-                    Circle().stroke(.white, lineWidth: 3)
+                    Circle().stroke(
+                        Preferences.UserLocationMarker.borderColor,
+                        lineWidth: Preferences.UserLocationMarker.borderWidth
+                    )
                 }
-                .shadow(color: .black.opacity(0.25), radius: 2)
+                .shadow(
+                    color: Preferences.UserLocationMarker.shadowColor,
+                    radius: Preferences.UserLocationMarker.shadowRadius
+                )
         }
     }
 }
