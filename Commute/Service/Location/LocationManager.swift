@@ -1,0 +1,141 @@
+//
+//  LocationManager.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
+import Foundation
+import CoreLocation
+import Observation
+
+// must be run on main actor for thread safety
+@MainActor
+@Observable
+final class LocationManager: LocationProvider {
+    private(set) var canAccessUserLocation: LocationAuthorizationStatus = .notDetermined
+
+    private let manager = CLLocationManager()
+    private var updateTask: Task<Void, Never>?
+    private var subscribers: [UUID: AsyncThrowingStream<Location, Error>.Continuation] = [:]
+
+    init() {
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        canAccessUserLocation = authorizationStatus(from: manager.authorizationStatus)
+    }
+
+    func requestPermission() async {
+        refreshAuthorizationStatus()
+        guard canAccessUserLocation == .notDetermined else { return }
+        manager.requestWhenInUseAuthorization()
+    }
+
+    // Each caller receives the same live core location stream
+    // this keeps a single update stream active while allowing multiple app features to observe it.
+    func locationStream() -> AsyncThrowingStream<Location, Error> {
+        refreshAuthorizationStatus()
+
+        return AsyncThrowingStream { continuation in
+            let subscriberID = UUID()
+            subscribers[subscriberID] = continuation
+            startUpdatesIfNeeded()
+
+            continuation.onTermination = { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.removeSubscriber(withID: subscriberID)
+                }
+            }
+        }
+    }
+
+    private func startUpdatesIfNeeded() {
+        guard updateTask == nil else { return }
+
+        updateTask = Task { [weak self] in
+            guard let self else { return }
+            await requestPermission()
+            await consumeLocationUpdates()
+        }
+    }
+
+    private func consumeLocationUpdates() async {
+        defer { updateTask = nil }
+
+        do {
+            for try await update in CLLocationUpdate.liveUpdates() {
+                updateAuthorization(for: update)
+
+                guard let location = makeLocation(from: update) else { continue }
+                broadcast(location)
+            }
+            finishSubscribers()
+        } catch {
+            guard !Task.isCancelled else { return }
+            finishSubscribers(throwing: error)
+        }
+    }
+
+    private func broadcast(_ location: Location) {
+        subscribers.values.forEach { $0.yield(location) }
+    }
+
+    private func removeSubscriber(withID id: UUID) {
+        subscribers[id] = nil
+        guard subscribers.isEmpty else { return }
+        updateTask?.cancel()
+        updateTask = nil
+    }
+
+    private func finishSubscribers(throwing error: Error) {
+        let activeSubscribers = subscribers.values
+        subscribers.removeAll()
+        activeSubscribers.forEach { $0.finish(throwing: error) }
+    }
+
+    private func finishSubscribers() {
+        let activeSubscribers = subscribers.values
+        subscribers.removeAll()
+        activeSubscribers.forEach { $0.finish() }
+    }
+
+    private func updateAuthorization(for update: CLLocationUpdate) {
+        switch (update.authorizationDenied, update.authorizationRestricted) {
+        case (true, _):
+            canAccessUserLocation = .denied
+        case (_, true):
+            canAccessUserLocation = .restricted
+        default:
+            break
+        }
+    }
+
+    private func makeLocation(from update: CLLocationUpdate) -> Location? {
+        guard let location = update.location else { return nil }
+
+        return Location(
+            id: UUID(),
+            coordinate: LocationCoordinate(
+                latitude: location.coordinate.latitude,
+                longitude: location.coordinate.longitude
+            ),
+            address: nil,
+            name: "Current Location",
+            source: .gps,
+            capturedAt: location.timestamp
+        )
+    }
+
+    private func authorizationStatus(from status: CLAuthorizationStatus) -> LocationAuthorizationStatus {
+        switch status {
+        case .authorizedAlways, .authorizedWhenInUse: .authorized
+        case .denied: .denied
+        case .restricted: .restricted
+        case .notDetermined: .notDetermined
+        @unknown default: .restricted
+        }
+    }
+
+    private func refreshAuthorizationStatus() {
+        canAccessUserLocation = authorizationStatus(from: manager.authorizationStatus)
+    }
+}

@@ -6,29 +6,40 @@
 //
 
 import SwiftUI
-import SwiftData
+import Observation
 
 @main
 struct CommuteApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+    @State private var locationManager: LocationManager
+    @State private var userLocationViewModel: UserLocationViewModel
+    @State private var navigationViewModel: NavigationRouteViewModel
+    @State private var navigationSessionViewModel: NavigationSessionViewModel
 
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-    
-    
+    init() {
+        let locationManager = LocationManager()
+        let userLocationViewModel = UserLocationViewModel()
+        let routePlanningService = MapKitRoutePlanningService()
+        let navigationViewModel = NavigationRouteViewModel(
+            routePlanningService: routePlanningService
+        )
+        let navigationSessionViewModel = NavigationSessionViewModel(
+            routePlanningService: routePlanningService,
+            routeProgressCalculator: RouteProgressCalculator()
+        )
+
+        _locationManager = State(initialValue: locationManager)
+        _userLocationViewModel = State(initialValue: userLocationViewModel)
+        _navigationViewModel = State(initialValue: navigationViewModel)
+        _navigationSessionViewModel = State(initialValue: navigationSessionViewModel)
+    }
+
     var body: some Scene {
         WindowGroup {
-            CyclingPathView()
+            MainView()
+                .environment(locationManager)
+                .environment(userLocationViewModel)
+                .environment(navigationViewModel)
+                .environment(navigationSessionViewModel)
         }
-        .modelContainer(for: [BikeParkingLocation.self])
-
     }
 }
