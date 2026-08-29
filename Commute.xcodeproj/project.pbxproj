@@ -27,6 +27,7 @@
 		7814DAD72FEECBFA0062AB24 /* Commute.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Commute.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7814DAE62FEECBFB0062AB24 /* CommuteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CommuteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7814DAF02FEECBFB0062AB24 /* CommuteUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CommuteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		78A49D9330428FBE00F7E739 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +76,7 @@
 		7814DACE2FEECBFA0062AB24 = {
 			isa = PBXGroup;
 			children = (
+				78A49D9330428FBE00F7E739 /* AGENTS.md */,
 				7814DAE92FEECBFB0062AB24 /* CommuteTests */,
 				7814DAF32FEECBFB0062AB24 /* CommuteUITests */,
 				7814DAD82FEECBFA0062AB24 /* Products */,

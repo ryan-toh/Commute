@@ -7,4 +7,8 @@ enum UserRouteState: Equatable {
     case arrived
     case stopped
     case failed
+
+    var isNavigating: Bool {
+        self == .following || self == .rerouting
+    }
 }

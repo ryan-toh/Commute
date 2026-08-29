@@ -26,35 +26,22 @@ final class RouteNavigationViewModel {
 
     var currentStep: RouteStep? {
         guard let activeRoute else { return nil }
-        let index = progress?.currentStepIndex ?? 0
+        let index = progress?.nextStepIndex ?? 0
         return activeRoute.steps.indices.contains(index) ? activeRoute.steps[index] : nil
     }
 
-    func selectDestination(_ destination: Location) {
+    func startNavigation(
+        with route: Route,
+        to destination: Location,
+        using locationProvider: UserLocationProvider
+    ) {
         stopNavigation()
         self.destination = destination
-        activeRoute = nil
-        progress = nil
-        navigationError = nil
-        lastRerouteDate = nil
-        state = .idle
-    }
-
-    func prepare(route: Route) {
-        stopNavigation()
         activeRoute = route
         progress = nil
         navigationError = nil
         lastRerouteDate = nil
-        state = .idle
-    }
-
-    func startNavigation(using locationProvider: LocationProvider) {
-        guard activeRoute != nil, destination != nil, monitoringTask == nil else { return }
-        progress = nil
-        lastRerouteDate = nil
         state = .following
-        navigationError = nil
 
         let monitoringID = UUID()
         self.monitoringID = monitoringID
@@ -73,7 +60,19 @@ final class RouteNavigationViewModel {
         }
     }
 
-    private func monitorLocation(using locationProvider: LocationProvider, monitoringID: UUID) async {
+    func clearNavigation() {
+        monitoringID = nil
+        monitoringTask?.cancel()
+        monitoringTask = nil
+        destination = nil
+        activeRoute = nil
+        progress = nil
+        navigationError = nil
+        lastRerouteDate = nil
+        state = .idle
+    }
+
+    private func monitorLocation(using locationProvider: UserLocationProvider, monitoringID: UUID) async {
         defer {
             if self.monitoringID == monitoringID {
                 self.monitoringTask = nil
@@ -146,7 +145,7 @@ final class RouteNavigationViewModel {
         }
     }
 
-    private func locationAccessError(for provider: LocationProvider) -> LocationAccessError {
+    private func locationAccessError(for provider: UserLocationProvider) -> LocationAccessError {
         switch provider.canAccessUserLocation {
         case .denied, .restricted:
             .denied

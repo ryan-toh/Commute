@@ -1,5 +1,5 @@
 //
-//  LocationManager.swift
+//  UserLocationManager.swift
 //  Commute
 //
 //  Created by Ryan on 26/8/26.
@@ -12,7 +12,7 @@ import Observation
 // must be run on main actor for thread safety
 @MainActor
 @Observable
-final class LocationManager: LocationProvider {
+final class UserLocationManager: UserLocationProvider {
     private(set) var canAccessUserLocation: LocationAuthorizationStatus = .notDetermined
 
     private let manager = CLLocationManager()
@@ -31,8 +31,8 @@ final class LocationManager: LocationProvider {
         manager.requestWhenInUseAuthorization()
     }
 
-    // Each caller receives the same live core location stream
-    // this keeps a single update stream active while allowing multiple app features to observe it.
+    // Each caller receives the same live Core Location stream. This type owns
+    // authorization enforcement, so it never yields a location after access is revoked.
     func locationStream() -> AsyncThrowingStream<Location, Error> {
         refreshAuthorizationStatus()
 

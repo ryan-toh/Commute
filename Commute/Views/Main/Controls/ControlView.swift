@@ -1,44 +1,76 @@
 import SwiftUI
 
 struct ControlView: View {
+    let onDestinationDismissed: () -> Void
+    let onNavigationStarted: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(UserLocationManager.self) private var locationManager
+    @Environment(UserLocationViewModel.self) private var userLocationViewModel
     @Environment(RoutePlanningViewModel.self) private var routePlanningViewModel
     @Environment(RouteNavigationViewModel.self) private var routeNavigationViewModel
 
-    private var routeState: RouteState {
-        RouteState(
-            destination: routeNavigationViewModel.destination,
-            sessionState: routeNavigationViewModel.state,
-            nextStep: routeNavigationViewModel.currentStep ?? routePlanningViewModel.nextStep,
-            progress: routeNavigationViewModel.progress,
-            isPlanningRoute: routePlanningViewModel.isPlanningRoute,
-            routeError: routePlanningViewModel.routeError,
-            navigationError: routeNavigationViewModel.navigationError,
-            hasPlannedRoute: routeNavigationViewModel.activeRoute != nil
+    var body: some View {
+        Group {
+            if let destination = routePlanningViewModel.destination {
+                switch routeNavigationViewModel.state {
+                case .following, .rerouting, .arrived, .failed:
+                    RouteNavigationView(
+                        state: routeNavigationViewModel.state,
+                        currentStep: routeNavigationViewModel.currentStep,
+                        progress: routeNavigationViewModel.progress,
+                        error: routeNavigationViewModel.navigationError,
+                        onStopNavigation: routeNavigationViewModel.stopNavigation
+                    )
+                    .transition(panelTransition)
+                case .idle, .stopped:
+                    RoutePlanningView(
+                        viewModel: routePlanningViewModel,
+                        onPlanRoute: planRoute,
+                        onStartNavigation: startNavigation,
+                        onDismissDestination: onDestinationDismissed
+                    )
+                    .transition(panelTransition)
+                    .onDisappear { routePlanningViewModel.cancelPlanning() }
+                }
+            }
+        }
+        .animation(
+            reduceMotion ? nil : Preferences.Motion.overlayTransitionAnimation,
+            value: routeNavigationViewModel.state
+        )
+        .animation(
+            reduceMotion ? nil : Preferences.Motion.overlayTransitionAnimation,
+            value: routePlanningViewModel.destination?.id
         )
     }
 
-    var body: some View {
-        if let destination = routeState.destination {
-            switch routeState.sessionState {
-            case .following, .rerouting, .arrived, .failed:
-                RouteNavigationView(
-                    state: routeState.sessionState,
-                    currentStep: routeState.nextStep,
-                    progress: routeState.progress,
-                    error: routeState.navigationError,
-                    onStopNavigation: routeNavigationViewModel.stopNavigation
-                )
-            case .idle, .stopped:
-                RoutePlanningView(
-                    destination: destination,
-                    nextStep: routeState.nextStep,
-                    isPlanning: routeState.isPlanningRoute,
-                    error: routeState.routeError,
-                    hasPlannedRoute: routeState.hasPlannedRoute
-                )
+    private var panelTransition: AnyTransition {
+        reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom))
+    }
+
+    private func planRoute() {
+        guard let origin = userLocationViewModel.currentLocation else {
+            userLocationViewModel.reportLocationUnavailable(using: locationManager)
+            if let error = userLocationViewModel.locationError {
+                routePlanningViewModel.showPlanningError(error)
             }
-        } else {
-            DestinationPromptView()
+            return
         }
+
+        Task {
+            await routePlanningViewModel.planRoute(from: origin)
+        }
+    }
+
+    private func startNavigation() {
+        guard let route = routePlanningViewModel.route,
+              let destination = routePlanningViewModel.destination else { return }
+
+        routeNavigationViewModel.startNavigation(
+            with: route,
+            to: destination,
+            using: locationManager
+        )
+        onNavigationStarted()
     }
 }

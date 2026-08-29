@@ -10,6 +10,7 @@ import Foundation
 struct RouteStep: Identifiable, Codable, Hashable {
     let id: UUID
     let instruction: String
+    let maneuver: RouteManeuver
     let distanceMeters: Double
     let coordinate: LocationCoordinate
     let routeCoordinateIndex: Int

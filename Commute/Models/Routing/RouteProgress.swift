@@ -5,6 +5,7 @@ struct RouteProgress: Codable, Hashable {
     let distanceFromRouteMeters: Double
     let completedDistanceMeters: Double
     let remainingDistanceMeters: Double
-    let currentStepIndex: Int
+    let nextStepIndex: Int
+    let distanceToNextStepMeters: Double
     let routeCoordinatePosition: Double
 }

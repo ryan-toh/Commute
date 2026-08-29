@@ -20,9 +20,10 @@ struct RouteProgressCalculator: RouteProgressCalculatorService {
         let completedDistance = segments.prefix(closest.segmentIndex)
             .reduce(0) { $0 + $1.lengthMeters } + closest.distanceAlongSegmentMeters
         let totalRouteDistance = segments.reduce(0) { $0 + $1.lengthMeters }
-        let currentStepIndex = stepIndex(
-            for: closest.routeCoordinatePosition,
-            route: route
+        let nextStep = nextStep(
+            after: completedDistance,
+            on: route,
+            segments: segments
         )
 
         return RouteProgress(
@@ -30,7 +31,8 @@ struct RouteProgressCalculator: RouteProgressCalculatorService {
             distanceFromRouteMeters: closest.distanceMeters,
             completedDistanceMeters: completedDistance,
             remainingDistanceMeters: max(0, totalRouteDistance - completedDistance),
-            currentStepIndex: currentStepIndex,
+            nextStepIndex: nextStep.index,
+            distanceToNextStepMeters: nextStep.distanceMeters,
             routeCoordinatePosition: closest.routeCoordinatePosition
         )
     }
@@ -50,13 +52,34 @@ struct RouteProgressCalculator: RouteProgressCalculatorService {
         .min(by: { $0.distanceMeters < $1.distanceMeters })
     }
 
-    private func stepIndex(
-        for routeCoordinatePosition: Double,
-        route: Route
-    ) -> Int {
-        route.steps.enumerated().last { _, step in
-            Double(step.routeCoordinateIndex) <= routeCoordinatePosition
-        }?.offset ?? 0
+    private func nextStep(
+        after completedDistance: Double,
+        on route: Route,
+        segments: [RouteSegment]
+    ) -> (index: Int, distanceMeters: Double) {
+        guard !route.steps.isEmpty else { return (0, 0) }
+
+        let routeDistanceAtCoordinate = routeDistanceIndex(segments: segments)
+        let maneuverAdvanceDistance = Preferences.NavigationSession.maneuverAdvanceDistanceMeters
+
+        for (index, step) in route.steps.enumerated() {
+            let maneuverDistance = routeDistanceAtCoordinate[
+                min(step.routeCoordinateIndex, routeDistanceAtCoordinate.count - 1)
+            ]
+            let distanceToManeuver = max(0, maneuverDistance - completedDistance)
+
+            if distanceToManeuver > maneuverAdvanceDistance {
+                return (index, distanceToManeuver)
+            }
+        }
+
+        return (route.steps.count - 1, 0)
+    }
+
+    private func routeDistanceIndex(segments: [RouteSegment]) -> [Double] {
+        segments.reduce(into: [0]) { distances, segment in
+            distances.append(distances[distances.count - 1] + segment.lengthMeters)
+        }
     }
 }
 

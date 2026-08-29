@@ -13,11 +13,11 @@ struct RecenterButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: Preferences.NavigationUI.recenterSymbol)
-                .font(.title3)
-                .padding()
-                .background(.regularMaterial, in: Circle())
+                .font(.system(size: Preferences.NavigationUI.recenterButtonSymbolSize, weight: .semibold))
+                .padding(Preferences.NavigationUI.recenterButtonContentPadding)
+                .liquidGlassSurface(in: Circle())
         }
-        .padding()
+        .buttonStyle(PressableButtonStyle())
     }
 }
 

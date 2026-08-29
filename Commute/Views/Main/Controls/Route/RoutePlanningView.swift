@@ -1,49 +1,86 @@
 import SwiftUI
 
 struct RoutePlanningView: View {
-    @Environment(LocationManager.self) private var locationManager
-    @Environment(UserLocationViewModel.self) private var userLocationViewModel
-    @Environment(RoutePlanningViewModel.self) private var routePlanningViewModel
-    @Environment(RouteNavigationViewModel.self) private var routeNavigationViewModel
-
-    let destination: Location
-    let nextStep: RouteStep?
-    let isPlanning: Bool
-    let error: Error?
-    let hasPlannedRoute: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let viewModel: RoutePlanningViewModel
+    let onPlanRoute: () -> Void
+    let onStartNavigation: () -> Void
+    let onDismissDestination: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Preferences.NavigationUI.controlsSpacing) {
-            RouteStepView(step: nextStep)
+        if let destination = viewModel.destination {
+            planningPanel(for: destination)
+        }
+    }
 
-            if isPlanning {
-                RoutePlanningProgressView()
-            } else if hasPlannedRoute {
-                StartNavigationButton(action: startNavigation)
-            } else {
-                PlanRouteButton(action: planRoute)
+    private func planningPanel(for destination: Location) -> some View {
+        VStack(spacing: Preferences.NavigationUI.controlsSpacing) {
+            HStack {
+                Spacer()
+                Button(action: onDismissDestination) {
+                    Image(systemName: Preferences.PlaceDetails.closeSymbol)
+                        .font(.system(size: Preferences.PlaceDetails.closeButtonSymbolSize, weight: .semibold))
+                        .padding(Preferences.PlaceDetails.closeButtonPadding)
+                        .liquidGlassSurface(in: Circle())
+                }
+                .buttonStyle(.plain)
+                .contentShape(Circle())
+                .accessibilityLabel(Preferences.PlaceDetails.closeAccessibilityLabel)
             }
 
-            if let error = error ?? userLocationViewModel.locationError {
+            SelectedPlaceCardView(
+                details: viewModel.placeDetails ?? LocationDetails(location: destination),
+                route: viewModel.route,
+                isLoading: viewModel.isLoadingPlaceDetails
+            )
+
+            planningContent
+
+            if let error = viewModel.routeError {
                 RoutePlanningErrorView(error: error)
+                    .transition(errorTransition)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(.regularMaterial)
-        .onDisappear { routePlanningViewModel.cancelPlanning() }
+        .frame(maxWidth: .infinity)
+        .padding(Preferences.NavigationUI.routeControlsPadding)
+        .background {
+            ContainerRelativeShape()
+                .fill(.clear)
+                .liquidGlassSurface(in: ContainerRelativeShape())
+                .ignoresSafeArea(edges: .bottom)
+        }
+        .animation(
+            reduceMotion ? nil : Preferences.CyclingNavigation.panelTransitionAnimation,
+            value: presentation
+        )
     }
 
-    private func planRoute() {
-        Task {
-            guard let origin = await userLocationViewModel.ensureCurrentLocation(using: locationManager) else { return }
-
-            guard let route = await routePlanningViewModel.planRoute(to: destination, from: origin) else { return }
-            routeNavigationViewModel.prepare(route: route)
+    @ViewBuilder
+    private var planningContent: some View {
+        if viewModel.isPlanningRoute {
+            RoutePlanningProgressView()
+                .transition(contentTransition)
+        } else if viewModel.route != nil {
+            StartNavigationButton(action: onStartNavigation)
+                .transition(contentTransition)
+        } else {
+            PlanRouteButton(action: onPlanRoute)
+                .transition(contentTransition)
         }
     }
 
-    private func startNavigation() {
-        routeNavigationViewModel.startNavigation(using: locationManager)
+    private var presentation: String {
+        if viewModel.isPlanningRoute { return "planning" }
+        if viewModel.route != nil { return "planned" }
+        if viewModel.routeError != nil { return "error" }
+        return "ready"
+    }
+
+    private var contentTransition: AnyTransition {
+        reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom))
+    }
+
+    private var errorTransition: AnyTransition {
+        reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .top))
     }
 }

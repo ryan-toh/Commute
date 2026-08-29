@@ -8,9 +8,8 @@ final class UserLocationViewModel {
     private(set) var locationError: Error?
     private var observationTask: Task<Void, Never>?
     private var observationID: UUID?
-    private var locationWaiters: [CheckedContinuation<Location?, Never>] = []
 
-    func startObserving(using provider: LocationProvider) {
+    func startObserving(using provider: UserLocationProvider) {
         guard observationTask == nil else { return }
 
         let observationID = UUID()
@@ -20,26 +19,14 @@ final class UserLocationViewModel {
         }
     }
 
-    func ensureCurrentLocation(using provider: LocationProvider) async -> Location? {
-        locationError = nil
-        if let currentLocation { return currentLocation }
-
-        switch provider.canAccessUserLocation {
-        case .denied, .restricted:
-            locationError = LocationAccessError.denied
-            return nil
-        case .notDetermined, .authorized:
-            break
-        }
-
-        startObserving(using: provider)
-        return await withCheckedContinuation { continuation in
-            locationWaiters.append(continuation)
-        }
+    func reportLocationUnavailable(using provider: UserLocationProvider) {
+        locationError = accessError(for: provider)
     }
 
-    private func observeLocation(using provider: LocationProvider, observationID: UUID) async {
+    private func observeLocation(using provider: UserLocationProvider, observationID: UUID) async {
         defer {
+            // check needed to prevent a cancelled previous observation
+            // from cancelling the current running observation
             if self.observationID == observationID {
                 self.observationTask = nil
                 self.observationID = nil
@@ -47,30 +34,18 @@ final class UserLocationViewModel {
         }
 
         do {
+            // The provider only yields locations while access remains available.
             for try await location in provider.locationStream() {
-                switch provider.canAccessUserLocation {
-                case .denied, .restricted:
-                    finishLocationWaiters(with: nil)
-                    return
-                case .notDetermined, .authorized:
-                    break
-                }
-
                 currentLocation = location
                 locationError = nil
-                let waiters = locationWaiters
-                locationWaiters.removeAll()
-                waiters.forEach { $0.resume(returning: location) }
             }
             if currentLocation == nil {
                 locationError = accessError(for: provider)
             }
-            finishLocationWaiters(with: nil)
         } catch is CancellationError {
             // expected when the view leaves the screen
         } catch {
             locationError = error
-            finishLocationWaiters(with: nil)
         }
     }
 
@@ -78,16 +53,9 @@ final class UserLocationViewModel {
         observationID = nil
         observationTask?.cancel()
         observationTask = nil
-        finishLocationWaiters(with: nil)
     }
 
-    private func finishLocationWaiters(with location: Location?) {
-        let waiters = locationWaiters
-        locationWaiters.removeAll()
-        waiters.forEach { $0.resume(returning: location) }
-    }
-
-    private func accessError(for provider: LocationProvider) -> LocationAccessError {
+    private func accessError(for provider: UserLocationProvider) -> LocationAccessError {
         switch provider.canAccessUserLocation {
         case .denied, .restricted:
             .denied
