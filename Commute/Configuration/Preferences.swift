@@ -15,6 +15,12 @@ enum Preferences {
     }
 
     enum CyclingPaths {
+        enum CloudflareDownloadError {
+            static let invalidResponseMessage = "The cycling path service returned an invalid response."
+            static let snapshotNotFoundMessage = "The cycling path service does not have a published snapshot."
+            static let invalidPayloadMessage = "The cycling path service returned an invalid segment payload."
+        }
+
         enum DownloadBackend: Sendable {
             case dataGovSG
             case cloudflareR2(URL)
@@ -184,17 +190,22 @@ enum Preferences {
         static let maximumDestinationFallbackTargets = 3
         static let nearbyCyclingPathDestinationName = "Nearby cycling path"
         static let nearbyDestinationArrivalInstruction = "Arrive near the destination"
-        static let maximumCyclingPathCandidates = 8
-        static let maximumCyclingPathGraphAnchorPairs = 12
-        static let cyclingPathEndpointSnapDistanceMeters = 12.0
-        static let maximumCyclingPathChainLengthMeters = 5_000.0
+        static let maximumCandidateExcursions = 8
+        static let maximumCyclingPathProjectionsPerBaselineCoordinate = 2
+        static let maximumCandidateExcursionAnchors = 24
+        static let maximumCandidateExcursionAnchorPairs = 12
+        static let maximumCyclingPathNetworkConnectionDistanceMeters = 12.0
+        static let maximumCandidateExcursionNetworkDistanceMeters = 5_000.0
         static let minimumCyclingPathForwardProgressMeters = 20.0
-        static let minimumPreferredCyclingPathDistanceMeters = 100.0
-        static let maximumTravelTimePenalty: TimeInterval = 8 * 60
-        static let assumedCyclingPathSpeedMetersPerSecond = 4.5
-        static let cyclingPathAddedTimePenaltyPerSecond = 0.5
-        static let cyclingPathAddedDistancePenalty = 0.05
+        static let minimumDestinationProgressMeters = 50.0
+        static let maximumExcursionDistanceToBaselineProgressRatio = 1.5
+        static let minimumCandidateExcursionCyclingPathDistanceMeters = 100.0
+        /// The largest acceptable increase over the direct route's travel time.
+        static let maximumAddedTravelTimePercentage = 0.15
+        static let assumedCyclingPathSpeedMetersPerSecond = 5.0
         static let cyclingPathInstruction = "Follow the cycling path"
+        static let cyclingPathEntryName = "Cycling path entry"
+        static let cyclingPathExitName = "Cycling path exit"
         static let forceAllNearbyCyclingPathsForDevelopment = false
     }
 
@@ -211,22 +222,20 @@ enum Preferences {
         static let storedSegmentCountLabel = "Stored segments"
         static let indexedCandidateCountLabel = "Indexed candidates along MapKit route"
         static let routeDecisionSectionTitle = "Cycling-path route decision"
-        static let nearbySegmentCountLabel = "Nearby segments"
-        static let segmentTraversalCountLabel = "Usable segment traversals"
-        static let graphAnchorCountLabel = "Graph anchors"
-        static let graphAnchorPairCountLabel = "Graph anchor pairs"
-        static let graphChainCountLabel = "Connected chains"
+        static let excursionAnchorCountLabel = "Candidate entry and exit points"
+        static let compatibleAnchorPairCountLabel = "Compatible entry–exit pairs"
+        static let candidateExcursionCountLabel = "Candidate excursions"
+        static let viableCandidateCountLabel = "Candidates within time limit"
         static let selectedCandidateLabel = "Selected candidate"
         static let directRouteSelectionLabel = "Direct MapKit route"
         static let candidateDecisionsSectionTitle = "Candidate decisions"
         static let noCandidateDecisionsLabel = "No candidates were eligible for connector routing."
-        static let singleSegmentCandidateLabel = "Single segment"
-        static let connectedChainCandidateLabel = "Connected chain"
+        static let candidateExcursionLabel = "Cycling-path excursion"
         static let connectorRouteUnavailableLabel = "Rejected: MapKit could not route a connector"
+        static let invalidCandidateConfigurationLabel = "Rejected: invalid routing configuration"
         static let exceededTimePenaltyFormat = "Rejected: added %d min exceeds the time limit"
-        static let noNetBenefitFormat = "Rejected: score %.0f"
-        static let viableCandidateFormat = "Viable: score %.0f"
-        static let selectedCandidateFormat = "Selected: score %.0f"
+        static let viableCandidateLabel = "Viable"
+        static let selectedCandidateOutcomeLabel = "Selected"
         static let cyclingPathDistanceFormat = "%d m of cycling path"
         static let sampleSegmentsSectionTitle = "Stored segment samples"
         static let unnamedSegmentLabel = "Unnamed cycling path"

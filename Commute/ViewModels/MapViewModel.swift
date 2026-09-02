@@ -1,3 +1,10 @@
+//
+//  MapViewModel.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
+
 import MapKit
 import Observation
 import SwiftUI
@@ -6,6 +13,7 @@ import SwiftUI
 @MainActor
 @Observable
 final class MapViewModel {
+    // MARK: - Observable Data
     var cameraPosition: MapCameraPosition = .automatic
     private(set) var visibleSearchArea: PlaceSearchArea?
 

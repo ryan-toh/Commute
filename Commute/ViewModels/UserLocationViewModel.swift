@@ -1,11 +1,20 @@
+//
+//  UserLocationViewModel.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
+
 import Observation
 import Foundation
 
 @MainActor
 @Observable
 final class UserLocationViewModel {
+    // MARK: - Observable Data
     private(set) var currentLocation: Location?
     private(set) var locationError: Error?
+    
     private var observationTask: Task<Void, Never>?
     private var observationID: UUID?
 

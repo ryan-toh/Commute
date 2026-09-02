@@ -5,11 +5,9 @@
 //  Created by Ryan on 26/8/26.
 //
 
-
-
 import Foundation
 
-/// A geographic area used to prioritize destination-search results.
+/// Prioritise search results for an area
 struct PlaceSearchArea: Codable, Hashable {
     let center: LocationCoordinate
     let latitudeDelta: Double

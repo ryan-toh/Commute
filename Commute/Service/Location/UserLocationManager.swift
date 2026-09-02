@@ -9,7 +9,6 @@ import Foundation
 import CoreLocation
 import Observation
 
-// must be run on main actor for thread safety
 @MainActor
 @Observable
 final class UserLocationManager: UserLocationProvider {

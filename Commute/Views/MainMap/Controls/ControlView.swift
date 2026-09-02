@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct ControlView: View {
+    
+    // MARK: - Data owned by me
     let onDestinationDismissed: () -> Void
     let onNavigationStarted: () -> Void
+    
+    // MARK: - Data In
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(UserLocationManager.self) private var locationManager
     @Environment(UserLocationViewModel.self) private var userLocationViewModel

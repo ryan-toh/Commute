@@ -1,9 +1,17 @@
+//
+//  RouteNavigationViewModel.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
+
 import Foundation
 import Observation
 
 @MainActor
 @Observable
 final class RouteNavigationViewModel {
+    // MARK: - Observable Data
     private(set) var destination: Location?
     private(set) var activeRoute: Route?
     private(set) var state: UserRouteState = .idle
@@ -35,14 +43,18 @@ final class RouteNavigationViewModel {
         to destination: Location,
         using locationProvider: UserLocationProvider
     ) {
+        // suspend current navigation session if any
         stopNavigation()
+        
+        // initial setup
         self.destination = destination
         activeRoute = route
         progress = nil
         navigationError = nil
         lastRerouteDate = nil
         state = .following
-
+        
+        // start navigation session
         let monitoringID = UUID()
         self.monitoringID = monitoringID
         monitoringTask = Task { [weak self] in
@@ -51,6 +63,7 @@ final class RouteNavigationViewModel {
     }
 
     func stopNavigation() {
+        // suspend navigation session if any
         monitoringID = nil
         monitoringTask?.cancel()
         monitoringTask = nil
@@ -61,6 +74,7 @@ final class RouteNavigationViewModel {
     }
 
     func clearNavigation() {
+        // suspend navigation session if any
         monitoringID = nil
         monitoringTask?.cancel()
         monitoringTask = nil
@@ -72,8 +86,15 @@ final class RouteNavigationViewModel {
         state = .idle
     }
 
+    /**
+        Gets the live location from a given UserLocationProvider and updates the current route progress.
+        - parameter using UserLocationProvider
+        - parameter monitoringID a unique ID identifying the current navigation session
+     */
     private func monitorLocation(using locationProvider: UserLocationProvider, monitoringID: UUID) async {
+        
         defer {
+            // suspend navigation session
             if self.monitoringID == monitoringID {
                 self.monitoringTask = nil
                 self.monitoringID = nil
@@ -84,6 +105,7 @@ final class RouteNavigationViewModel {
             for try await location in locationProvider.locationStream() {
                 guard await updateNavigation(for: location, monitoringID: monitoringID) else { return }
             }
+            
             guard self.monitoringID == monitoringID, !Task.isCancelled else { return }
             navigationError = locationAccessError(for: locationProvider)
             state = .failed
@@ -97,25 +119,37 @@ final class RouteNavigationViewModel {
     }
 
     private func updateNavigation(for location: Location, monitoringID: UUID) async -> Bool {
+        // cannot update if:
+        // 1. no navigation session
+        // 2. there is no active route (rerouting)
         guard self.monitoringID == monitoringID, !Task.isCancelled else { return false }
         guard let activeRoute else { return false }
+        
+        // publish route progress
         guard let routeProgress = routeProgressCalculator.progress(
             on: activeRoute,
             at: location,
             after: progress?.routeCoordinatePosition
         ) else { return true }
-
+        
         progress = routeProgress
 
+        // stop updating if we arrive at destination
         if routeProgress.remainingDistanceMeters <= Preferences.NavigationSession.arrivalThresholdMeters {
             state = .arrived
             stopNavigation()
             return false
         }
 
-        guard routeProgress.distanceFromRouteMeters > Preferences.NavigationSession.offRouteThresholdMeters else { return true }
-        guard state == .following, canReroute else { return true }
-        await reroute(from: location, monitoringID: monitoringID)
+        // reroute if we can reroute and are too far away
+        let isOffRoute = routeProgress.distanceFromRouteMeters
+            > Preferences.NavigationSession.offRouteThresholdMeters
+        let isCurrentlyFollowingRoute = state == .following
+            
+        if isOffRoute, isCurrentlyFollowingRoute, canReroute {
+            await reroute(from: location, monitoringID: monitoringID)
+        }
+        
         return state != .failed
     }
 
@@ -123,7 +157,7 @@ final class RouteNavigationViewModel {
         guard let lastRerouteDate else { return true }
         return Date.now.timeIntervalSince(lastRerouteDate) >= Preferences.NavigationSession.minimumRerouteInterval
     }
-
+    
     private func reroute(from origin: Location, monitoringID: UUID) async {
         guard let destination else { return }
 

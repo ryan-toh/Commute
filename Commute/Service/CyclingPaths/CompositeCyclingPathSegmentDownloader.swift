@@ -1,20 +1,33 @@
+//
+//  CompositeCyclingPathSegmentDownloader.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
+
+/// Downloads all cycling-path snapshots from chosen CyclingPathSegmentDownloading implementations
 struct CompositeCyclingPathSegmentDownloader: CyclingPathSegmentDownloading {
     let downloaders: [any CyclingPathSegmentDownloading]
 
     func downloadSegments(
-        using policy: CyclingPathSegmentDownloadPolicy
+        using policy: CyclingPathSegmentFetchPolicy
     ) async throws -> [CyclingPathSegment] {
-        var segments: [CyclingPathSegment] = []
+        var segmentsByID: [String: CyclingPathSegment] = [:]
 
         for downloader in downloaders {
-            segments += try await downloader.downloadSegments(using: policy)
+            let downloadedSegments = try await downloader.downloadSegments(
+                using: policy
+            )
+
+            for segment in downloadedSegments {
+                if segmentsByID[segment.id] == nil {
+                    segmentsByID[segment.id] = segment
+                }
+            }
         }
 
-        return Dictionary(
-            segments.map { ($0.id, $0) },
-            uniquingKeysWith: { first, _ in first }
-        )
-        .values
-        .sorted { $0.id < $1.id }
+        return segmentsByID.values.sorted { first, second in
+            first.id < second.id
+        }
     }
 }

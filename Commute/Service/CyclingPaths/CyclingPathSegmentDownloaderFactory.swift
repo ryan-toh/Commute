@@ -1,3 +1,10 @@
+//
+//  CyclingPathSegmentDownloaderFactory.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
+
 enum CyclingPathSegmentDownloaderFactory {
     static func make() -> (sourceID: String, downloader: any CyclingPathSegmentDownloading) {
         switch Preferences.CyclingPaths.downloadBackend {
@@ -11,14 +18,14 @@ enum CyclingPathSegmentDownloaderFactory {
         case let .cloudflareR2(endpoint):
             return (
                 Preferences.CyclingPaths.cloudflareR2SourceID,
-                CloudflareCyclingPathSegmentDownloader(endpoint: endpoint)
+                CFCyclingPathSegmentDownloader(endpoint: endpoint)
             )
         case .allSources:
             return (
                 Preferences.CyclingPaths.allSourcesSourceID,
                 CompositeCyclingPathSegmentDownloader(
                     downloaders: dataGovSGDownloaders + [
-                        CloudflareCyclingPathSegmentDownloader(
+                        CFCyclingPathSegmentDownloader(
                             endpoint: Preferences.CyclingPaths.cloudflareR2Endpoint
                         )
                     ]

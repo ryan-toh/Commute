@@ -1,6 +1,12 @@
+//
+//  RouteManeuver.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
 import Foundation
 
-/// A framework-independent description of the direction required for a route step.
 enum RouteManeuver: String, Codable, Hashable {
     case straight
     case slightLeft

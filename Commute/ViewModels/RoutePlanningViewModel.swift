@@ -1,9 +1,17 @@
+//
+//  RoutePlanningViewModel.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
+
 import Foundation
 import Observation
 
 @MainActor
 @Observable
 final class RoutePlanningViewModel {
+    // MARK: - Observable Data
     private(set) var destination: Location?
     private(set) var route: Route?
     private(set) var isPlanningRoute = false

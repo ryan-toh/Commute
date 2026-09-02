@@ -4,6 +4,7 @@ import SwiftData
 
 /// Presents the complete navigation experience: map first, controls second.
 struct MainView: View {
+    // MARK: - Data In
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -17,6 +18,8 @@ struct MainView: View {
     @Environment(RouteNavigationViewModel.self) private var routeNavigationViewModel
     
     @State private var mapViewModel = MapViewModel()
+    
+    // MARK: - Data Owned by Me
     @State private var isShowingLocationError = false
     #if DEBUG
     @State private var isShowingRouteComparison = false
@@ -255,7 +258,7 @@ private struct MainViewLayout {
 
 private struct PreviewCyclingPathSegmentDownloader: CyclingPathSegmentDownloading {
     func downloadSegments(
-        using policy: CyclingPathSegmentDownloadPolicy
+        using policy: CyclingPathSegmentFetchPolicy
     ) async throws -> [CyclingPathSegment] { [] }
 }
 

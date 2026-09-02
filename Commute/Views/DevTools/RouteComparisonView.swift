@@ -1,6 +1,7 @@
 import MapKit
 import SwiftUI
 import SwiftData
+// EXTREMELY UGLY FOR DEV PURPOSES
 
 /// A debug-only visual comparison between the baseline and cycling-path-aware planners.
 struct RouteComparisonView: View {
@@ -84,20 +85,17 @@ struct RouteComparisonView: View {
 
                     if let cyclingPathDecisionTrace {
                         Section(Preferences.DevTools.routeDecisionSectionTitle) {
-                            LabeledContent(Preferences.DevTools.nearbySegmentCountLabel) {
-                                Text(cyclingPathDecisionTrace.nearbySegmentCount.formatted())
+                            LabeledContent(Preferences.DevTools.excursionAnchorCountLabel) {
+                                Text(cyclingPathDecisionTrace.excursionAnchorCount.formatted())
                             }
-                            LabeledContent(Preferences.DevTools.segmentTraversalCountLabel) {
-                                Text(cyclingPathDecisionTrace.segmentTraversalCount.formatted())
+                            LabeledContent(Preferences.DevTools.compatibleAnchorPairCountLabel) {
+                                Text(cyclingPathDecisionTrace.compatibleAnchorPairCount.formatted())
                             }
-                            LabeledContent(Preferences.DevTools.graphAnchorCountLabel) {
-                                Text(cyclingPathDecisionTrace.graphAnchorCount.formatted())
+                            LabeledContent(Preferences.DevTools.candidateExcursionCountLabel) {
+                                Text(cyclingPathDecisionTrace.candidateExcursionCount.formatted())
                             }
-                            LabeledContent(Preferences.DevTools.graphAnchorPairCountLabel) {
-                                Text(cyclingPathDecisionTrace.graphAnchorPairCount.formatted())
-                            }
-                            LabeledContent(Preferences.DevTools.graphChainCountLabel) {
-                                Text(cyclingPathDecisionTrace.graphChainCount.formatted())
+                            LabeledContent(Preferences.DevTools.viableCandidateCountLabel) {
+                                Text(cyclingPathDecisionTrace.viableCandidateCount.formatted())
                             }
                             LabeledContent(Preferences.DevTools.selectedCandidateLabel) {
                                 Text(selectedCandidateTitle(in: cyclingPathDecisionTrace))
@@ -269,7 +267,7 @@ struct RouteComparisonView: View {
         isSelected: Bool
     ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(candidateSourceTitle(for: decision.source))
+            Text(Preferences.DevTools.candidateExcursionLabel)
             Text(
                 String(
                     format: Preferences.DevTools.cyclingPathDistanceFormat,
@@ -284,19 +282,11 @@ struct RouteComparisonView: View {
         }
     }
 
-    private func candidateSourceTitle(for source: CyclingPathRouteCandidateSource) -> String {
-        switch source {
-        case .singleSegment: Preferences.DevTools.singleSegmentCandidateLabel
-        case .connectedChain: Preferences.DevTools.connectedChainCandidateLabel
-        }
-    }
-
     private func selectedCandidateTitle(in trace: CyclingPathRouteDecisionTrace) -> String {
-        guard let selectedCandidateID = trace.selectedCandidateID,
-              let selectedCandidate = trace.candidateDecisions.first(where: { $0.id == selectedCandidateID }) else {
+        guard trace.selectedCandidateID != nil else {
             return Preferences.DevTools.directRouteSelectionLabel
         }
-        return candidateSourceTitle(for: selectedCandidate.source)
+        return Preferences.DevTools.candidateExcursionLabel
     }
 
     private func candidateOutcomeTitle(
@@ -306,20 +296,17 @@ struct RouteComparisonView: View {
         switch outcome {
         case .connectorRouteUnavailable:
             Preferences.DevTools.connectorRouteUnavailableLabel
+        case .invalidConfiguration:
+            Preferences.DevTools.invalidCandidateConfigurationLabel
         case let .exceededTimePenalty(addedTime):
             String(
                 format: Preferences.DevTools.exceededTimePenaltyFormat,
                 Int(addedTime / 60)
             )
-        case let .noNetBenefit(score):
-            String(format: Preferences.DevTools.noNetBenefitFormat, score)
-        case let .viable(score):
-            String(
-                format: isSelected
-                    ? Preferences.DevTools.selectedCandidateFormat
-                    : Preferences.DevTools.viableCandidateFormat,
-                score
-            )
+        case .viable:
+            isSelected
+                ? Preferences.DevTools.selectedCandidateOutcomeLabel
+                : Preferences.DevTools.viableCandidateLabel
         }
     }
 
@@ -328,7 +315,7 @@ struct RouteComparisonView: View {
         isSelected: Bool
     ) -> Color {
         switch outcome {
-        case .connectorRouteUnavailable, .exceededTimePenalty, .noNetBenefit:
+        case .connectorRouteUnavailable, .invalidConfiguration, .exceededTimePenalty:
             .red
         case .viable:
             isSelected ? .green : .secondary

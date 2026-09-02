@@ -1,29 +1,24 @@
-import Foundation
+//
+//  CyclingPathSegmentDownloading.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
 
+/// Requires returning CyclingPathSegments asynchronously
 protocol CyclingPathSegmentDownloading {
     func downloadSegments(
-        using policy: CyclingPathSegmentDownloadPolicy
+        using policy: CyclingPathSegmentFetchPolicy
     ) async throws -> [CyclingPathSegment]
 }
 
-enum CyclingPathSegmentDownloadPolicy: Sendable {
-    case useProtocolCache
-    case forceRefresh
-
-    var urlRequestCachePolicy: URLRequest.CachePolicy {
-        switch self {
-        case .useProtocolCache: .useProtocolCachePolicy
-        case .forceRefresh: .reloadIgnoringLocalCacheData
-        }
-    }
-
-    var shouldRevalidate: Bool {
-        self == .forceRefresh
-    }
+enum CyclingPathSegmentFetchPolicy: Sendable {
+    case useCachedData
+    case refresh
 }
 
 extension CyclingPathSegmentDownloading {
     func downloadSegments() async throws -> [CyclingPathSegment] {
-        try await downloadSegments(using: .useProtocolCache)
+        try await downloadSegments(using: .useCachedData)
     }
 }

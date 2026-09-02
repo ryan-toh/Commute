@@ -1,6 +1,14 @@
+//
+//  CyclingPathSegmentRecord.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
+
 import Foundation
 import SwiftData
 
+/// A seperate class representation of CyclingPathSegments to reduce model coupling with SwiftData
 @Model
 final class CyclingPathSegmentRecord {
     @Attribute(.unique) var id: String

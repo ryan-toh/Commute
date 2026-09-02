@@ -1,14 +1,22 @@
+//
+//  DestinationSearchViewModel.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
+
 import Foundation
 import Observation
 
 @MainActor
 @Observable
 final class DestinationSearchViewModel {
+    // MARK: - Observable Data
     var query = ""
     private(set) var results: [Location] = []
     private(set) var isSearching = false
     private(set) var searchError: Error?
-
+    
     private let destinationSearchService: any DestinationSearchService
     private var searchTask: Task<Void, Never>?
     private var searchRequestID: UUID?

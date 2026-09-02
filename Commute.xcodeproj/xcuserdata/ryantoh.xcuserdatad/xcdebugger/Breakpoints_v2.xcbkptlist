@@ -30,8 +30,8 @@
             filePath = "Commute/Service/Location/UserLocationManager.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "38"
-            endingLineNumber = "38"
+            startingLineNumber = "37"
+            endingLineNumber = "37"
             landmarkName = "locationStream()"
             landmarkType = "7">
          </BreakpointContent>
@@ -48,7 +48,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "27"
             endingLineNumber = "27"
-            landmarkName = "CyclingPaths"
+            landmarkName = "DownloadBackend"
             landmarkType = "13">
          </BreakpointContent>
       </BreakpointProxy>

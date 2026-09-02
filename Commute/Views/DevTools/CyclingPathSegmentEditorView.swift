@@ -1,6 +1,7 @@
 import CoreLocation
 import MapKit
 import SwiftUI
+// EXTREMELY UGLY FOR DEV PURPOSES
 
 /// A deliberately self-contained development tool for drawing and uploading cycling paths.
 /// The upload secret is held only for the lifetime of this view.

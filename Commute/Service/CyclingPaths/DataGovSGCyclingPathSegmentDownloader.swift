@@ -10,7 +10,7 @@ struct DataGovSGCyclingPathSegmentDownloader: CyclingPathSegmentDownloading {
     let pollDownloadEndpoint: URL
 
     func downloadSegments(
-        using policy: CyclingPathSegmentDownloadPolicy
+        using policy: CyclingPathSegmentFetchPolicy
     ) async throws -> [CyclingPathSegment] {
         let pollResponse: PollDownloadResponse = try await fetch(
             PollDownloadResponse.self,
@@ -32,10 +32,10 @@ struct DataGovSGCyclingPathSegmentDownloader: CyclingPathSegmentDownloading {
     private func fetch<Response: Decodable>(
         _ type: Response.Type,
         from url: URL,
-        using policy: CyclingPathSegmentDownloadPolicy
+        using policy: CyclingPathSegmentFetchPolicy
     ) async throws -> Response {
         var request = URLRequest(url: url)
-        request.cachePolicy = policy.urlRequestCachePolicy
+        request.cachePolicy = requestCachePolicy(for: policy)
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let response = response as? HTTPURLResponse,
               (200...299).contains(response.statusCode) else {
@@ -43,6 +43,17 @@ struct DataGovSGCyclingPathSegmentDownloader: CyclingPathSegmentDownloading {
         }
 
         return try JSONDecoder().decode(Response.self, from: data)
+    }
+
+    private func requestCachePolicy(
+        for policy: CyclingPathSegmentFetchPolicy
+    ) -> URLRequest.CachePolicy {
+        switch policy {
+        case .useCachedData:
+            .useProtocolCachePolicy
+        case .refresh:
+            .reloadIgnoringLocalCacheData
+        }
     }
 
     private func makeSegment(from feature: GeoJSONFeature) -> CyclingPathSegment? {

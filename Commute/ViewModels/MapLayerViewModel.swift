@@ -1,3 +1,10 @@
+//
+//  MapLayerViewModel.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
+
 import CoreLocation
 import Foundation
 import MapKit
@@ -7,10 +14,11 @@ import Observation
 @MainActor
 @Observable
 final class MapLayerViewModel {
+    // MARK: - Observable Data
     private(set) var enabledLayers = Set(MapLayer.allCases)
     private(set) var isSatelliteStyleEnabled = false
     private(set) var loadedCyclingPathPolylines: [CyclingPathMapPolyline] = []
-
+    
     private let cyclingPathRepository: CyclingPathRepository
     private let polylineCache = NSCache<NSString, MKPolyline>()
     private var cachedRepositoryContentRevision: Int?
@@ -32,13 +40,14 @@ final class MapLayerViewModel {
     func setSatelliteStyle(isEnabled: Bool) {
         isSatelliteStyleEnabled = isEnabled
     }
-
+    
     func updateVisibleArea(_ area: PlaceSearchArea) {
         guard enabledLayers.contains(.cyclingPaths), cyclingPathRepository.isPrepared else {
             clearLoadedPolylines()
             return
         }
-
+        
+        // only clear cache if beyond a set distance from the current distance
         guard area.latitudeDelta <= Preferences.MapLayers.maximumCyclingPathLayerLatitudeDelta,
               area.longitudeDelta <= Preferences.MapLayers.maximumCyclingPathLayerLongitudeDelta else {
             clearLoadedPolylines()
@@ -89,7 +98,8 @@ final class MapLayerViewModel {
         polylineCache.setObject(polyline, forKey: cacheKey)
         return polyline
     }
-
+    
+    // reduce fidelity of CyclingPathSegment
     private func simplifiedCoordinates(for segment: CyclingPathSegment) -> [LocationCoordinate] {
         let coordinates = segment.coordinates
         let maximumPointCount = Preferences.MapLayers.maximumRenderedPointsPerCyclingPath

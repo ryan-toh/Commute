@@ -1,6 +1,14 @@
+//
+//  CyclingPathRepository.swift
+//  Commute
+//
+//  Created by Ryan on 31/8/26.
+//
+
 import Foundation
 import Observation
 
+/// Maintains persisted cycling-path segments and their read-optimized indexes.
 @MainActor
 @Observable
 final class CyclingPathRepository {
@@ -11,7 +19,7 @@ final class CyclingPathRepository {
     private let downloader: any CyclingPathSegmentDownloading
     private let store: any CyclingPathSegmentStoring
     private let spatialIndex: CyclingPathSpatialIndex
-    private var graph: CyclingPathGraph
+    private(set) var network: CyclingPathNetwork
     private let sourceID: String
     private var isPreparing = false
 
@@ -23,7 +31,10 @@ final class CyclingPathRepository {
         self.downloader = downloader
         self.store = store
         self.spatialIndex = CyclingPathSpatialIndex()
-        self.graph = CyclingPathGraph()
+        self.network = CyclingPathNetworkBuilder().makeNetwork(
+            from: [],
+            maximumConnectionDistanceMeters: Preferences.RoutePlanning.maximumCyclingPathNetworkConnectionDistanceMeters
+        )
         self.sourceID = sourceID
     }
 
@@ -38,10 +49,10 @@ final class CyclingPathRepository {
             if storedSegments.isEmpty || metadata == nil {
                 // A new or manually-cleared local database must not be repopulated
                 // from an older URLSession cache entry.
-                try await downloadStoreAndIndex(using: .forceRefresh)
+                try await downloadStoreAndIndex(using: .refresh)
             } else {
                 spatialIndex.rebuild(with: storedSegments)
-                graph.rebuild(with: storedSegments)
+                network = makeNetwork(from: storedSegments)
                 contentRevision += 1
             }
 
@@ -74,7 +85,7 @@ final class CyclingPathRepository {
                     lastUpdateCheckAt: .now
                 )
             )
-            try await downloadStoreAndIndex(using: .forceRefresh)
+            try await downloadStoreAndIndex(using: .refresh)
             isPrepared = true
             preparationError = nil
             return true
@@ -93,7 +104,7 @@ final class CyclingPathRepository {
         defer { isPreparing = false }
 
         do {
-            try await downloadStoreAndIndex(using: .forceRefresh)
+            try await downloadStoreAndIndex(using: .refresh)
             isPrepared = true
             preparationError = nil
             return true
@@ -110,7 +121,7 @@ final class CyclingPathRepository {
 
         try store.replaceAll(with: [])
         spatialIndex.rebuild(with: [])
-        graph.rebuild(with: [])
+        network = makeNetwork(from: [])
         isPrepared = false
         preparationError = nil
         contentRevision += 1
@@ -134,31 +145,8 @@ final class CyclingPathRepository {
         )
     }
 
-    func graphNodeIDs(near coordinate: LocationCoordinate, within radiusMeters: Double) -> [Int] {
-        graph.nodeIDs(near: coordinate, within: radiusMeters)
-    }
-
-    func graphNodeCoordinate(for nodeID: Int) -> LocationCoordinate? {
-        graph.coordinate(for: nodeID)
-    }
-
-    func graphComponentID(for nodeID: Int) -> Int? {
-        graph.componentID(for: nodeID)
-    }
-
-    func shortestCyclingPathChain(
-        from startNodeID: Int,
-        to endNodeID: Int
-    ) -> CyclingPathChain? {
-        graph.shortestChain(
-            from: startNodeID,
-            to: endNodeID,
-            maximumLengthMeters: Preferences.RoutePlanning.maximumCyclingPathChainLengthMeters
-        )
-    }
-
     private func downloadStoreAndIndex(
-        using policy: CyclingPathSegmentDownloadPolicy
+        using policy: CyclingPathSegmentFetchPolicy
     ) async throws {
         let segments = try await downloader.downloadSegments(using: policy)
         guard !segments.isEmpty else { throw CyclingPathRepositoryError.emptyDataset }
@@ -178,8 +166,15 @@ final class CyclingPathRepository {
             )
         )
         spatialIndex.rebuild(with: uniqueSegments)
-        graph.rebuild(with: uniqueSegments)
+        network = makeNetwork(from: uniqueSegments)
         contentRevision += 1
+    }
+
+    private func makeNetwork(from segments: [CyclingPathSegment]) -> CyclingPathNetwork {
+        CyclingPathNetworkBuilder().makeNetwork(
+            from: segments,
+            maximumConnectionDistanceMeters: Preferences.RoutePlanning.maximumCyclingPathNetworkConnectionDistanceMeters
+        )
     }
 }
 
