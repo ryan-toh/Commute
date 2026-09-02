@@ -10,10 +10,11 @@ struct MapView: View {
 
     // MARK: - Data In
     let mapViewModel: MapViewModel
+    let mapLayerViewModel: MapLayerViewModel
     let mapScope: Namespace.ID
     let onDestinationSelected: (Location) -> Void
     let onDestinationDismissed: () -> Void
-    let onVisibleSearchAreaChanged: (LocationSearchArea) -> Void
+    let onVisibleSearchAreaChanged: (PlaceSearchArea) -> Void
 
     // MARK: - Data In
     private var displayedRoute: Route? {
@@ -39,13 +40,16 @@ struct MapView: View {
                     bounds: navigationCameraBounds,
                     scope: mapScope
                 ) {
-                    RouteLine(
+                    MapLayerContent(
+                        enabledLayers: mapLayerViewModel.enabledLayers,
+                        cyclingPathPolylines: mapLayerViewModel.loadedCyclingPathPolylines,
                         route: displayedRoute,
-                        progress: routeNavigationViewModel.progress
+                        routeProgress: routeNavigationViewModel.progress,
+                        destination: displayedDestination,
+                        userLocation: userLocationViewModel.currentLocation
                     )
-                    UserLocationAnnotation(location: userLocationViewModel.currentLocation)
-                    DestinationAnnotation(location: displayedDestination)
                 }
+                .mapStyle(mapLayerViewModel.isSatelliteStyleEnabled ? .imagery : .standard)
                 .simultaneousGesture(
                     destinationSelectionGesture(using: mapProxy),
                     including: routeNavigationViewModel.state.isNavigating ? .none : .all
@@ -54,6 +58,7 @@ struct MapView: View {
                     mapViewModel.updateVisibleSearchArea(from: context.region)
                     if let area = mapViewModel.visibleSearchArea {
                         onVisibleSearchAreaChanged(area)
+                        mapLayerViewModel.updateVisibleArea(area)
                     }
                 }
                 .mapControlVisibility(.hidden)

@@ -30,6 +30,16 @@
 		78A49D9330428FBE00F7E739 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		78A49E1130445A7B00F7E739 /* Exceptions for "Commute" folder in "Commute" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7814DAD62FEECBFA0062AB24 /* Commute */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7814DAE92FEECBFB0062AB24 /* CommuteTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -43,6 +53,9 @@
 		};
 		783734102FF903A3001F0B1F /* Commute */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				78A49E1130445A7B00F7E739 /* Exceptions for "Commute" folder in "Commute" target */,
+			);
 			path = Commute;
 			sourceTree = "<group>";
 		};
@@ -400,6 +413,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Commute/Info.plist;
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Commute needs your location so it can provide routing, even in the background.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Commute uses your location to show and recenter the map.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -447,6 +461,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Commute/Info.plist;
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Commute needs your location so it can provide routing, even in the background.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Commute uses your location to show and recenter the map.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;

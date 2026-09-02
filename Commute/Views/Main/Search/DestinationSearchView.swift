@@ -4,6 +4,7 @@ struct DestinationSearchView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let viewModel: DestinationSearchViewModel
     let isSearchFocused: FocusState<Bool>.Binding
+    let maximumResultsHeight: CGFloat
     let onDestinationSelected: (Location) -> Void
 
     var body: some View {
@@ -98,6 +99,7 @@ struct DestinationSearchView: View {
             } else {
                 DestinationListView(
                     results: viewModel.results,
+                    maximumHeight: maximumResultsHeight,
                     onDestinationSelected: selectDestination
                 )
             }
@@ -118,6 +120,7 @@ struct DestinationSearchView: View {
     DestinationSearchView(
         viewModel: destinationSearchViewModel,
         isSearchFocused: $isSearchFocused,
+        maximumResultsHeight: Preferences.DestinationSearch.resultsMaximumHeight,
         onDestinationSelected: { _ in }
     )
 }

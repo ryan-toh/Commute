@@ -41,6 +41,28 @@ struct CommuteTests {
         #expect((approachingTurn?.distanceToNextStepMeters ?? 0) > 25)
     }
 
+    @Test @MainActor func spatialIndexReturnsSegmentsFromNearbyCells() {
+        let segment = CyclingPathSegment(
+            id: "1",
+            name: "Test path",
+            lengthMeters: 20,
+            coordinates: [
+                LocationCoordinate(latitude: 1.3, longitude: 103.8),
+                LocationCoordinate(latitude: 1.3001, longitude: 103.8001)
+            ]
+        )
+        let index = CyclingPathSpatialIndex()
+
+        index.rebuild(with: [segment])
+
+        #expect(
+            index.candidateSegments(
+                near: LocationCoordinate(latitude: 1.30005, longitude: 103.80005),
+                within: 100
+            ) == [segment]
+        )
+    }
+
     private func step(at routeCoordinateIndex: Int) -> RouteStep {
         RouteStep(
             id: UUID(),

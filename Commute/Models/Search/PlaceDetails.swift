@@ -1,7 +1,13 @@
+//
+//  LocationCoordinate.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
 import Foundation
 
-/// Framework-independent display information for a selected place.
-struct LocationDetails: Hashable {
+struct PlaceDetails: Hashable {
     let name: String
     let address: String?
     let categoryName: String?

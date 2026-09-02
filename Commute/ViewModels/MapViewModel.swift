@@ -7,7 +7,7 @@ import SwiftUI
 @Observable
 final class MapViewModel {
     var cameraPosition: MapCameraPosition = .automatic
-    private(set) var visibleSearchArea: LocationSearchArea?
+    private(set) var visibleSearchArea: PlaceSearchArea?
 
     private var hasCenteredOnInitialLocation = false
 
@@ -32,7 +32,7 @@ final class MapViewModel {
     }
 
     func updateVisibleSearchArea(from region: MKCoordinateRegion) {
-        visibleSearchArea = LocationSearchArea(
+        visibleSearchArea = PlaceSearchArea(
             center: LocationCoordinate(
                 latitude: region.center.latitude,
                 longitude: region.center.longitude

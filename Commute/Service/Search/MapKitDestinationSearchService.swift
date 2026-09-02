@@ -4,7 +4,7 @@ import MapKit
 final class MapKitDestinationSearchService: DestinationSearchService {
     func searchDestinations(
         matching query: String,
-        in area: LocationSearchArea?
+        in area: PlaceSearchArea?
     ) async throws -> [Location] {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query

@@ -18,18 +18,18 @@ struct RoutePlanningView: View {
             HStack {
                 Spacer()
                 Button(action: onDismissDestination) {
-                    Image(systemName: Preferences.PlaceDetails.closeSymbol)
-                        .font(.system(size: Preferences.PlaceDetails.closeButtonSymbolSize, weight: .semibold))
-                        .padding(Preferences.PlaceDetails.closeButtonPadding)
+                    Image(systemName: Preferences.PlaceDetail.closeSymbol)
+                        .font(.system(size: Preferences.PlaceDetail.closeButtonSymbolSize, weight: .semibold))
+                        .padding(Preferences.PlaceDetail.closeButtonPadding)
                         .liquidGlassSurface(in: Circle())
                 }
                 .buttonStyle(.plain)
                 .contentShape(Circle())
-                .accessibilityLabel(Preferences.PlaceDetails.closeAccessibilityLabel)
+                .accessibilityLabel(Preferences.PlaceDetail.closeAccessibilityLabel)
             }
 
             SelectedPlaceCardView(
-                details: viewModel.placeDetails ?? LocationDetails(location: destination),
+                details: viewModel.placeDetails ?? PlaceDetails(location: destination),
                 route: viewModel.route,
                 isLoading: viewModel.isLoadingPlaceDetails
             )

@@ -4,12 +4,12 @@ import SwiftUI
 struct SelectedPlaceCardView: View {
     
     // MARK: - Data In
-    let details: LocationDetails
+    let details: PlaceDetails
     let route: Route?
     let isLoading: Bool
 
     var body: some View {
-        VStack(spacing: Preferences.PlaceDetails.cardSpacing) {
+        VStack(spacing: Preferences.PlaceDetail.cardSpacing) {
             PlaceHeaderView(details: details, isLoading: isLoading)
             PlaceQuickActionsView(details: details)
 
@@ -23,12 +23,12 @@ struct SelectedPlaceCardView: View {
 }
 
 private struct PlaceHeaderView: View {
-    let details: LocationDetails
+    let details: PlaceDetails
     let isLoading: Bool
 
     var body: some View {
         ZStack(alignment: .trailing) {
-            VStack(spacing: Preferences.PlaceDetails.headerSpacing) {
+            VStack(spacing: Preferences.PlaceDetail.headerSpacing) {
                 Text(details.name)
                     .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
@@ -43,7 +43,8 @@ private struct PlaceHeaderView: View {
                     Text(address)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                        .lineLimit(Preferences.PlaceDetails.addressLineLimit)
+                        .lineLimit(Preferences.PlaceDetail
+                            .addressLineLimit)
                         .multilineTextAlignment(.center)
                 }
             }
@@ -52,39 +53,39 @@ private struct PlaceHeaderView: View {
             if isLoading {
                 ProgressView()
                     .controlSize(.small)
-                    .accessibilityLabel(Preferences.PlaceDetails.loadingSymbol)
+                    .accessibilityLabel(Preferences.PlaceDetail.loadingSymbol)
             }
         }
     }
 }
 
 private struct PlaceQuickActionsView: View {
-    let details: LocationDetails
+    let details: PlaceDetails
 
     var body: some View {
-        HStack(spacing: Preferences.PlaceDetails.actionSpacing) {
+        HStack(spacing: Preferences.PlaceDetail.actionSpacing) {
             if let callURL = details.callURL {
                 Link(destination: callURL) {
-                    actionIcon(systemImage: Preferences.PlaceDetails.callSymbol)
+                    actionIcon(systemImage: Preferences.PlaceDetail.callSymbol)
                 }
-                .accessibilityLabel(Preferences.PlaceDetails.callLabel)
+                .accessibilityLabel(Preferences.PlaceDetail.callLabel)
             }
 
             if let websiteURL = details.websiteURL {
                 Link(destination: websiteURL) {
-                    actionIcon(systemImage: Preferences.PlaceDetails.websiteSymbol)
+                    actionIcon(systemImage: Preferences.PlaceDetail.websiteSymbol)
                 }
-                .accessibilityLabel(Preferences.PlaceDetails.websiteLabel)
+                .accessibilityLabel(Preferences.PlaceDetail.websiteLabel)
             }
         }
     }
 
     private func actionIcon(systemImage: String) -> some View {
         Image(systemName: systemImage)
-            .font(.system(size: Preferences.PlaceDetails.actionSymbolSize, weight: .semibold))
+            .font(.system(size: Preferences.PlaceDetail.actionSymbolSize, weight: .semibold))
             .frame(maxWidth: .infinity)
-            .padding(.vertical, Preferences.PlaceDetails.actionVerticalPadding)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: Preferences.PlaceDetails.actionCornerRadius))
+            .padding(.vertical, Preferences.PlaceDetail.actionVerticalPadding)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: Preferences.PlaceDetail.actionCornerRadius))
     }
 }
 
@@ -95,7 +96,7 @@ private struct RoutePreviewView: View {
         Label {
             Text(routeSummary)
         } icon: {
-            Image(systemName: Preferences.PlaceDetails.routeSummarySymbol)
+            Image(systemName: Preferences.PlaceDetail.routeSummarySymbol)
         }
         .font(.subheadline.weight(.medium))
         .foregroundStyle(.secondary)
@@ -104,18 +105,22 @@ private struct RoutePreviewView: View {
 
     private var routeSummary: String {
         let distance = String(
-            format: Preferences.PlaceDetails.distanceFormat,
+            format: Preferences.PlaceDetail.distanceFormat,
             route.distanceMeters / 1_000
         )
         let minutes = Int((route.expectedTravelTime / 60).rounded())
-        let duration = String(format: Preferences.PlaceDetails.durationFormat, minutes)
-        return "\(Preferences.PlaceDetails.routeLabel) · \(duration) · \(distance)"
+        let duration = String(format: Preferences.PlaceDetail.durationFormat, minutes)
+        let summary = "\(Preferences.PlaceDetail.routeLabel) · \(duration) · \(distance)"
+        guard case let .indirect(remainingDistanceMeters) = route.arrival else {
+            return summary
+        }
+        return "\(summary) · \(String(format: Preferences.PlaceDetail.nearbyDestinationFormat, Int(remainingDistanceMeters.rounded())))"
     }
 }
 
 #Preview {
     SelectedPlaceCardView(
-        details: LocationDetails(
+        details: PlaceDetails(
             name: "SHP – Punggol",
             address: "21 Punggol Field, Singapore 828450",
             categoryName: "Medical Centre",

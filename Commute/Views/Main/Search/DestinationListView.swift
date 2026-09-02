@@ -10,6 +10,7 @@ import SwiftUI
 struct DestinationListView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let results: [Location]
+    let maximumHeight: CGFloat
     let onDestinationSelected: (Location) -> Void
 
     var body: some View {
@@ -24,7 +25,7 @@ struct DestinationListView: View {
                 }
             }
         }
-        .frame(maxHeight: Preferences.DestinationSearch.resultsMaximumHeight)
+        .frame(maxHeight: maximumHeight)
         .animation(
             reduceMotion ? nil : Preferences.DestinationSearch.listExpansionAnimation,
             value: results.map(\.id)
@@ -33,5 +34,8 @@ struct DestinationListView: View {
 }
 
 #Preview {
-    DestinationListView(results: []) {_ in }
+    DestinationListView(
+        results: [],
+        maximumHeight: Preferences.DestinationSearch.resultsMaximumHeight
+    ) { _ in }
 }

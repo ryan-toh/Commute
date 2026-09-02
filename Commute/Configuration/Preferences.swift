@@ -14,6 +14,37 @@ enum Preferences {
         static let maximumDistanceMeters: CLLocationDistance = 1_000
     }
 
+    enum CyclingPaths {
+        enum DownloadBackend: Sendable {
+            case dataGovSG
+            case cloudflareR2(URL)
+            case allSources
+        }
+
+        nonisolated static let sourceID = "data.gov.sg.cycling-path-network.v3"
+        nonisolated static let cloudflareR2SourceID = "cloudflare-r2.cycling-path-network.v1"
+        nonisolated static let allSourcesSourceID = "composite.cycling-path-network.v1"
+        nonisolated static let cloudflareR2Endpoint = URL(string: "https://commute-cycling-path-segment.ryandev-devprod.workers.dev/v1/cycling-path-segments")!
+        nonisolated static let downloadBackend: DownloadBackend = .allSources
+        nonisolated static let dataGovSGSources = [
+            DataGovSGSource(
+                id: "data.gov.sg.d_8f468b25193f64be8a16fa7d8f60f553",
+                pollDownloadEndpoint: URL(string: "https://api-open.data.gov.sg/v1/public/api/datasets/d_8f468b25193f64be8a16fa7d8f60f553/poll-download")!
+            ),
+            DataGovSGSource(
+                id: "data.gov.sg.d_a69ef89737379f231d2ae93fd1c5707f",
+                pollDownloadEndpoint: URL(string: "https://api-open.data.gov.sg/v1/public/api/datasets/d_a69ef89737379f231d2ae93fd1c5707f/poll-download")!
+            )
+        ]
+        nonisolated static let minimumRefreshInterval: TimeInterval = 24 * 60 * 60
+        nonisolated static let spatialIndexCellSizeDegrees = 0.01
+        nonisolated static let metersPerLatitudeDegree = 111_132.0
+
+        nonisolated static func metersPerLongitudeDegree(at latitude: Double) -> Double {
+            111_320.0 * cos(latitude * .pi / 180)
+        }
+    }
+
     enum UserLocationMarker {
         static let defaultDotSize: CGFloat = 16
         static let haloScale: CGFloat = 2.6
@@ -69,6 +100,68 @@ enum Preferences {
         static let arrivedSymbol = "checkmark.circle.fill"
     }
 
+    enum MainLayout {
+        static let searchTopPadding: CGFloat = 8
+        static let compactHeightThreshold: CGFloat = 500
+        static let compactSearchResultsMaximumHeight: CGFloat = 160
+        static let regularSearchResultsMaximumHeight: CGFloat = 320
+        static let regularWidthRoutePanelMaximumWidth: CGFloat = 640
+        static let routePanelHorizontalMargin: CGFloat = 32
+    }
+
+    enum MapLayers {
+        static let pickerSymbol = "square.3.layers.3d"
+        static let pickerSymbolSize: CGFloat = 20
+        static let pickerAccessibilityLabel = "Map layers"
+        static let pickerExpansionAccessibilityHint = "Shows the available map layers"
+        static let pickerCollapseAccessibilityHint = "Hides the available map layers"
+        static let layerShownAccessibilityValue = "Shown"
+        static let layerHiddenAccessibilityValue = "Hidden"
+        static let layerShowAccessibilityHint = "Double tap to show"
+        static let layerHideAccessibilityHint = "Double tap to hide"
+        static let pickerArcOffsets: [CGSize] = [
+            CGSize(width: 0, height: -80),
+            CGSize(width: -50, height: -50),
+            CGSize(width: -80, height: 0)
+        ]
+        static let pickerLayerSymbolSize: CGFloat = 17
+        static let satelliteSymbol = "globe.americas.fill"
+        static let standardMapSymbol = "map.fill"
+        static let satelliteAccessibilityLabel = "Satellite map"
+        static let standardMapAccessibilityLabel = "Standard map"
+        static let satelliteEnableAccessibilityHint = "Double tap to switch to satellite imagery"
+        static let satelliteDisableAccessibilityHint = "Double tap to switch to the standard map"
+        static let pickerLayerControlSize: CGFloat = 54
+        static let pickerCollapsedScale: CGFloat = 0.18
+        static let pickerLayerAnimation = Animation.bouncy(duration: 0.32, extraBounce: 0.12)
+        static let cyclingPathLineColor = Color.green.opacity(0.8)
+        static let cyclingPathLineWidth: CGFloat = 4
+        static let maximumCyclingPathLayerLatitudeDelta = 0.06
+        static let maximumCyclingPathLayerLongitudeDelta = 0.06
+        static let maximumRenderedCyclingPathSegments = 180
+        static let maximumRenderedPointsPerCyclingPath = 40
+        static let cyclingPathPolylineCacheLimit = 1_000
+        static let cyclingPathLayerRetainedAreaPaddingFactor = 1.5
+
+        static func title(for layer: MapLayer) -> String {
+            switch layer {
+            case .cyclingPaths: "Cycling paths"
+            case .route: "Route"
+            case .destination: "Destination"
+            case .userLocation: "My location"
+            }
+        }
+
+        static func symbol(for layer: MapLayer) -> String {
+            switch layer {
+            case .cyclingPaths: "bicycle"
+            case .route: "point.topleft.down.to.point.bottomright.curvepath"
+            case .destination: "mappin"
+            case .userLocation: "location"
+            }
+        }
+    }
+
     enum LocationService {
         static let currentLocationName = "Current Location"
         static let locationUnavailableTitle = "Location unavailable"
@@ -78,11 +171,120 @@ enum Preferences {
     }
 
     enum RoutePlanning {
+        enum Service {
+            case mapKit
+            case cyclingPathAware
+        }
+
+        static let selectedService: Service = .cyclingPathAware
         static let fallbackInstruction = "Continue"
         static let noRouteFoundMessage = "No cycling route is available for this destination."
+        static let cyclingPathSearchRadiusMeters = 250.0
+        static let destinationFallbackSearchRadiusMeters = 250.0
+        static let maximumDestinationFallbackTargets = 3
+        static let nearbyCyclingPathDestinationName = "Nearby cycling path"
+        static let nearbyDestinationArrivalInstruction = "Arrive near the destination"
+        static let maximumCyclingPathCandidates = 8
+        static let maximumCyclingPathGraphAnchorPairs = 12
+        static let cyclingPathEndpointSnapDistanceMeters = 12.0
+        static let maximumCyclingPathChainLengthMeters = 5_000.0
+        static let minimumCyclingPathForwardProgressMeters = 20.0
+        static let minimumPreferredCyclingPathDistanceMeters = 100.0
+        static let maximumTravelTimePenalty: TimeInterval = 8 * 60
+        static let assumedCyclingPathSpeedMetersPerSecond = 4.5
+        static let cyclingPathAddedTimePenaltyPerSecond = 0.5
+        static let cyclingPathAddedDistancePenalty = 0.05
+        static let cyclingPathInstruction = "Follow the cycling path"
+        static let forceAllNearbyCyclingPathsForDevelopment = false
     }
 
-    enum PlaceDetails {
+    enum DevTools {
+        static let routeComparisonTitle = "Route comparison"
+        static let compareRoutesTitle = "Compare routes"
+        static let routesSectionTitle = "Routes"
+        static let cyclingPathDatabaseSectionTitle = "Cycling path database"
+        static let repositoryPreparedLabel = "Repository prepared"
+        static let preparationErrorLabel = "Preparation error"
+        static let retrySyncTitle = "Retry sync"
+        static let yesLabel = "Yes"
+        static let noLabel = "No"
+        static let storedSegmentCountLabel = "Stored segments"
+        static let indexedCandidateCountLabel = "Indexed candidates along MapKit route"
+        static let routeDecisionSectionTitle = "Cycling-path route decision"
+        static let nearbySegmentCountLabel = "Nearby segments"
+        static let segmentTraversalCountLabel = "Usable segment traversals"
+        static let graphAnchorCountLabel = "Graph anchors"
+        static let graphAnchorPairCountLabel = "Graph anchor pairs"
+        static let graphChainCountLabel = "Connected chains"
+        static let selectedCandidateLabel = "Selected candidate"
+        static let directRouteSelectionLabel = "Direct MapKit route"
+        static let candidateDecisionsSectionTitle = "Candidate decisions"
+        static let noCandidateDecisionsLabel = "No candidates were eligible for connector routing."
+        static let singleSegmentCandidateLabel = "Single segment"
+        static let connectedChainCandidateLabel = "Connected chain"
+        static let connectorRouteUnavailableLabel = "Rejected: MapKit could not route a connector"
+        static let exceededTimePenaltyFormat = "Rejected: added %d min exceeds the time limit"
+        static let noNetBenefitFormat = "Rejected: score %.0f"
+        static let viableCandidateFormat = "Viable: score %.0f"
+        static let selectedCandidateFormat = "Selected: score %.0f"
+        static let cyclingPathDistanceFormat = "%d m of cycling path"
+        static let sampleSegmentsSectionTitle = "Stored segment samples"
+        static let unnamedSegmentLabel = "Unnamed cycling path"
+        static let coordinateCountFormat = "%d coordinates"
+        static let sampleSegmentLimit = 3
+        static let inspectorHeight: CGFloat = 300
+        static let mapKitRouteLabel = "MapKit"
+        static let cyclingPathRouteLabel = "Cycling-path aware"
+        static let originLabel = "Origin"
+        static let destinationLabel = "Destination"
+        static let routeNotPlannedLabel = "Not planned"
+        static let routeDistanceFormat = "%d m"
+        static let routeDurationFormat = "%d min"
+        static let mapKitRouteColor = Color.orange
+        static let cyclingPathRouteColor = Color.cyan
+        static let routeLineWidth: CGFloat = 7
+        static let routeCameraPaddingFactor = 1.25
+        static let debugButtonSymbol = "arrow.triangle.branch"
+        static let debugButtonPadding: CGFloat = 14
+        static let developerToolsTitle = "Developer tools"
+        static let routeEditorTitle = "Cycling path editor"
+        static let openRouteComparisonTitle = "Compare routes"
+        static let openCyclingPathEditorTitle = "Draw and upload path"
+        static let routeEditorSymbol = "point.topleft.down.to.point.bottomright.curvepath"
+        static let routeEditorInstructions = "Tap the map to draw the cycling path. Add at least two points, then upload it to the development service."
+        static let routeEditorNamePrompt = "Path name (optional)"
+        static let routeEditorSecretPrompt = "Upload secret"
+        static let routeEditorPublishTitle = "Publish snapshot after upload"
+        static let routeEditorUndoTitle = "Undo point"
+        static let routeEditorClearTitle = "Clear path"
+        static let routeEditorUploadTitle = "Upload segment"
+        static let routeEditorUploadingTitle = "Uploading…"
+        static let routeEditorPointCountFormat = "%d points"
+        static let routeEditorMinimumPointMessage = "Add at least two points before uploading."
+        static let routeEditorMissingSecretMessage = "Enter the upload secret before uploading."
+        static let routeEditorUploadSucceededMessage = "Cycling path segment uploaded."
+        static let routeEditorUploadFailedMessage = "The cycling path segment could not be uploaded."
+        static let routeEditorFetchDatabaseTitle = "Fetch latest combined database"
+        static let routeEditorFetchingDatabaseTitle = "Fetching latest database…"
+        static let routeEditorFetchDatabaseSucceededMessage = "The local cycling-path database is up to date."
+        static let routeEditorFetchDatabaseFailedMessage = "The latest cycling-path database could not be fetched."
+        static let routeEditorFetchDatabaseInProgressMessage = "A cycling-path database refresh is already in progress."
+        static let routeEditorDeleteDatabaseTitle = "Delete local cycling-path database"
+        static let routeEditorDeleteDatabaseConfirmationTitle = "Delete local cycling-path data?"
+        static let routeEditorDeleteDatabaseConfirmationMessage = "This removes the downloaded cycling-path segments from this device. You can fetch a fresh combined database afterwards."
+        static let routeEditorDeleteDatabaseActionTitle = "Delete database"
+        static let routeEditorDeleteDatabaseSucceededMessage = "The local cycling-path database was deleted."
+        static let routeEditorDeleteDatabaseInProgressMessage = "A cycling-path database operation is already in progress."
+        static let routeEditorMapLineColor = Color.cyan
+        static let routeEditorMapLineWidth: CGFloat = 7
+        static let routeEditorInitialLatitude = 1.3521
+        static let routeEditorInitialLongitude = 103.8198
+        static let routeEditorInitialLatitudeDelta = 0.04
+        static let routeEditorInitialLongitudeDelta = 0.04
+        static let routeEditorSheetHeight: CGFloat = 620
+    }
+
+    enum PlaceDetail {
         static let searchRadiusMeters: CLLocationDistance = 1_000
         static let maximumMapItemDistanceMeters: CLLocationDistance = 50
         static let cardSpacing: CGFloat = 16
@@ -103,6 +305,7 @@ enum Preferences {
         static let distanceFormat = "%.1f km"
         static let durationFormat = "%d min"
         static let routeLabel = "Road Bike"
+        static let nearbyDestinationFormat = "%d m from destination"
         static let callLabel = "Call"
         static let websiteLabel = "Website"
     }

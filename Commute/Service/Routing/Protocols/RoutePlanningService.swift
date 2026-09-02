@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 protocol RoutePlanningService {
     func planCyclingRoute(
         from origin: Location,

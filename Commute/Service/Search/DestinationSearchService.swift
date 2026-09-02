@@ -3,6 +3,6 @@ import Foundation
 protocol DestinationSearchService {
     func searchDestinations(
         matching query: String,
-        in area: LocationSearchArea?
+        in area: PlaceSearchArea?
     ) async throws -> [Location]
 }

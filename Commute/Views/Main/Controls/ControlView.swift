@@ -11,18 +11,18 @@ struct ControlView: View {
 
     var body: some View {
         Group {
-            if let destination = routePlanningViewModel.destination {
-                switch routeNavigationViewModel.state {
-                case .following, .rerouting, .arrived, .failed:
-                    RouteNavigationView(
-                        state: routeNavigationViewModel.state,
-                        currentStep: routeNavigationViewModel.currentStep,
-                        progress: routeNavigationViewModel.progress,
-                        error: routeNavigationViewModel.navigationError,
-                        onStopNavigation: routeNavigationViewModel.stopNavigation
-                    )
-                    .transition(panelTransition)
-                case .idle, .stopped:
+            switch routeNavigationViewModel.state {
+            case .following, .rerouting, .arrived, .failed:
+                RouteNavigationView(
+                    state: routeNavigationViewModel.state,
+                    currentStep: routeNavigationViewModel.currentStep,
+                    progress: routeNavigationViewModel.progress,
+                    error: routeNavigationViewModel.navigationError,
+                    onStopNavigation: routeNavigationViewModel.stopNavigation
+                )
+                .transition(panelTransition)
+            case .idle, .stopped:
+                if routePlanningViewModel.destination != nil {
                     RoutePlanningView(
                         viewModel: routePlanningViewModel,
                         onPlanRoute: planRoute,

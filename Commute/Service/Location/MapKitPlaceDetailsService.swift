@@ -2,9 +2,9 @@ import CoreLocation
 import MapKit
 
 final class MapKitPlaceDetailsService: LocationDetailsService {
-    func details(for location: Location) async throws -> LocationDetails {
+    func details(for location: Location) async throws -> PlaceDetails {
         guard let name = location.name, !name.isEmpty else {
-            return LocationDetails(location: location)
+            return PlaceDetails(location: location)
         }
 
         let request = MKLocalSearch.Request()
@@ -15,16 +15,16 @@ final class MapKitPlaceDetailsService: LocationDetailsService {
                 latitude: location.coordinate.latitude,
                 longitude: location.coordinate.longitude
             ),
-            latitudinalMeters: Preferences.PlaceDetails.searchRadiusMeters,
-            longitudinalMeters: Preferences.PlaceDetails.searchRadiusMeters
+            latitudinalMeters: Preferences.PlaceDetail.searchRadiusMeters,
+            longitudinalMeters: Preferences.PlaceDetail.searchRadiusMeters
         )
 
         let response = try await MKLocalSearch(request: request).start()
         guard let mapItem = nearestMapItem(in: response.mapItems, to: location.coordinate) else {
-            return LocationDetails(location: location)
+            return PlaceDetails(location: location)
         }
 
-        return LocationDetails(
+        return PlaceDetails(
             name: mapItem.name ?? name,
             address: mapItem.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true)
                 ?? location.address?.formatted,
@@ -48,7 +48,7 @@ final class MapKitPlaceDetailsService: LocationDetailsService {
             return nil
         }
 
-        guard nearestMapItem.location.distance(from: tappedLocation) <= Preferences.PlaceDetails.maximumMapItemDistanceMeters else {
+        guard nearestMapItem.location.distance(from: tappedLocation) <= Preferences.PlaceDetail.maximumMapItemDistanceMeters else {
             return nil
         }
 

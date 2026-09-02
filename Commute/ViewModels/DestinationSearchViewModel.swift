@@ -12,13 +12,13 @@ final class DestinationSearchViewModel {
     private let destinationSearchService: any DestinationSearchService
     private var searchTask: Task<Void, Never>?
     private var searchRequestID: UUID?
-    private var searchArea: LocationSearchArea?
+    private var searchArea: PlaceSearchArea?
 
     init(destinationSearchService: any DestinationSearchService) {
         self.destinationSearchService = destinationSearchService
     }
 
-    func updateSearchArea(_ area: LocationSearchArea) {
+    func updateSearchArea(_ area: PlaceSearchArea) {
         searchArea = area
     }
 

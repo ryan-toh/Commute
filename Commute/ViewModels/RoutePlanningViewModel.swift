@@ -8,7 +8,7 @@ final class RoutePlanningViewModel {
     private(set) var route: Route?
     private(set) var isPlanningRoute = false
     private(set) var routeError: Error?
-    private(set) var placeDetails: LocationDetails?
+    private(set) var placeDetails: PlaceDetails?
     private(set) var isLoadingPlaceDetails = false
     private(set) var placeDetailsError: Error?
 
@@ -95,7 +95,7 @@ final class RoutePlanningViewModel {
 
         let requestID = UUID()
         placeDetailsRequestID = requestID
-        placeDetails = LocationDetails(location: destination)
+        placeDetails = PlaceDetails(location: destination)
         isLoadingPlaceDetails = true
 
         placeDetailsTask = Task { [placeDetailsService] in
