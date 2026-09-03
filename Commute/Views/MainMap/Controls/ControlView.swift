@@ -1,46 +1,48 @@
+//
+//  ControlView.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
 import SwiftUI
 
 struct ControlView: View {
-    
-    // MARK: - Data owned by me
-    let onDestinationDismissed: () -> Void
-    let onNavigationStarted: () -> Void
-    
     // MARK: - Data In
+    let routePlanningViewModel: RoutePlanningViewModel
+    let routeNavigationViewModel: RouteNavigationViewModel
+    let onPlanRoute: () -> Void
+    let onStartNavigation: () -> Void
+    let onDestinationDismissed: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(UserLocationManager.self) private var locationManager
-    @Environment(UserLocationViewModel.self) private var userLocationViewModel
-    @Environment(RoutePlanningViewModel.self) private var routePlanningViewModel
-    @Environment(RouteNavigationViewModel.self) private var routeNavigationViewModel
 
     var body: some View {
         Group {
-            switch routeNavigationViewModel.state {
+            switch routeNavigationViewModel.currentState {
             case .following, .rerouting, .arrived, .failed:
                 RouteNavigationView(
-                    state: routeNavigationViewModel.state,
+                    state: routeNavigationViewModel.currentState,
                     currentStep: routeNavigationViewModel.currentStep,
                     progress: routeNavigationViewModel.progress,
                     error: routeNavigationViewModel.navigationError,
                     onStopNavigation: routeNavigationViewModel.stopNavigation
                 )
-                .transition(panelTransition)
             case .idle, .stopped:
                 if routePlanningViewModel.destination != nil {
                     RoutePlanningView(
                         viewModel: routePlanningViewModel,
-                        onPlanRoute: planRoute,
-                        onStartNavigation: startNavigation,
+                        onPlanRoute: onPlanRoute,
+                        onStartNavigation: onStartNavigation,
                         onDismissDestination: onDestinationDismissed
                     )
-                    .transition(panelTransition)
                     .onDisappear { routePlanningViewModel.cancelPlanning() }
                 }
             }
         }
+        .transition(panelTransition)
         .animation(
             reduceMotion ? nil : Preferences.Motion.overlayTransitionAnimation,
-            value: routeNavigationViewModel.state
+            value: routeNavigationViewModel.currentState
         )
         .animation(
             reduceMotion ? nil : Preferences.Motion.overlayTransitionAnimation,
@@ -52,29 +54,4 @@ struct ControlView: View {
         reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom))
     }
 
-    private func planRoute() {
-        guard let origin = userLocationViewModel.currentLocation else {
-            userLocationViewModel.reportLocationUnavailable(using: locationManager)
-            if let error = userLocationViewModel.locationError {
-                routePlanningViewModel.showPlanningError(error)
-            }
-            return
-        }
-
-        Task {
-            await routePlanningViewModel.planRoute(from: origin)
-        }
-    }
-
-    private func startNavigation() {
-        guard let route = routePlanningViewModel.route,
-              let destination = routePlanningViewModel.destination else { return }
-
-        routeNavigationViewModel.startNavigation(
-            with: route,
-            to: destination,
-            using: locationManager
-        )
-        onNavigationStarted()
-    }
 }

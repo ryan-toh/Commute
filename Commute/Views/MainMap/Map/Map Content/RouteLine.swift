@@ -1,7 +1,15 @@
+//
+//  RouteLine.swift
+//  Commute
+//
+//  Created by Ryan on 28/8/26.
+//
+
 import SwiftUI
 import MapKit
 
 struct RouteLine: MapContent {
+    // MARK: - Data In
     let route: Route?
     let progress: RouteProgress?
 

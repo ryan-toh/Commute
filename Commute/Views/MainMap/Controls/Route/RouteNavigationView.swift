@@ -1,3 +1,10 @@
+//
+//  RouteNavigationView.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
 import Foundation
 import SwiftUI
 
@@ -57,7 +64,7 @@ struct RouteNavigationView: View {
             NavigationStatusView(
                 title: Preferences.NavigationUI.rerouting,
                 symbolName: Preferences.CyclingNavigation.reroutingSymbol,
-                symbolColor: .orange,
+                symbolColor: Preferences.NavigationUI.reroutingStatusColor,
                 showsProgress: true
             )
             .id(state)
@@ -67,7 +74,7 @@ struct RouteNavigationView: View {
             NavigationStatusView(
                 title: Preferences.NavigationUI.arrived,
                 symbolName: Preferences.CyclingNavigation.arrivedSymbol,
-                symbolColor: .green,
+                symbolColor: Preferences.NavigationUI.arrivalStatusColor,
                 showsProgress: false
             )
             .id(state)
@@ -76,7 +83,7 @@ struct RouteNavigationView: View {
             NavigationStatusView(
                 title: error?.localizedDescription ?? Preferences.CyclingNavigation.navigationFailedMessage,
                 symbolName: Preferences.CyclingNavigation.failedSymbol,
-                symbolColor: .red,
+                symbolColor: Preferences.NavigationUI.navigationFailureStatusColor,
                 showsProgress: false
             )
             .id(state)

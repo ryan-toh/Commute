@@ -1,5 +1,5 @@
 //
-//  UserLocation.swift
+//  LocationAnnotation.swift
 //  Commute
 //
 //  Created by Ryan on 26/8/26.
@@ -8,16 +8,17 @@
 import SwiftUI
 import MapKit
 
+/// Customisable LocationAnnotation using Location (not CLLocationCoordinate2D)
 struct LocationAnnotation<Content: View>: MapContent {
     var location: Location
-    let content: Content
+    @ViewBuilder let content: () -> Content
 
     init(
         location: Location,
-        @ViewBuilder content: () -> Content
+        content: @escaping () -> Content
     ) {
         self.location = location
-        self.content = content()
+        self.content = content
     }
     
     var body: some MapContent {
@@ -28,7 +29,7 @@ struct LocationAnnotation<Content: View>: MapContent {
                 longitude: location.coordinate.longitude
             )
         ) {
-            content
+            content()
         }
     }
 }

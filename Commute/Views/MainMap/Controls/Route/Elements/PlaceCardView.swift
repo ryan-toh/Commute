@@ -1,8 +1,14 @@
+//
+//  PlaceCardView.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
 import SwiftUI
 
 /// Renders rich selected-place data without owning place or route state.
-struct SelectedPlaceCardView: View {
-    
+struct PlaceCardView: View {
     // MARK: - Data In
     let details: PlaceDetails
     let route: Route?
@@ -23,12 +29,14 @@ struct SelectedPlaceCardView: View {
 }
 
 private struct PlaceHeaderView: View {
+    // MARK: - Data In
     let details: PlaceDetails
     let isLoading: Bool
 
     var body: some View {
-        ZStack(alignment: .trailing) {
+        ZStack(alignment: .leading) {
             VStack(spacing: Preferences.PlaceDetail.headerSpacing) {
+
                 Text(details.name)
                     .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
@@ -49,17 +57,12 @@ private struct PlaceHeaderView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-
-            if isLoading {
-                ProgressView()
-                    .controlSize(.small)
-                    .accessibilityLabel(Preferences.PlaceDetail.loadingSymbol)
-            }
         }
     }
 }
 
 private struct PlaceQuickActionsView: View {
+    // MARK: - Data In
     let details: PlaceDetails
 
     var body: some View {
@@ -90,6 +93,7 @@ private struct PlaceQuickActionsView: View {
 }
 
 private struct RoutePreviewView: View {
+    // MARK: - Data In
     let route: Route
 
     var body: some View {
@@ -119,7 +123,7 @@ private struct RoutePreviewView: View {
 }
 
 #Preview {
-    SelectedPlaceCardView(
+    PlaceCardView(
         details: PlaceDetails(
             name: "SHP – Punggol",
             address: "21 Punggol Field, Singapore 828450",
@@ -138,7 +142,7 @@ private struct RoutePreviewView: View {
             expectedTravelTime: 1_380,
             transportMode: .cycling
         ),
-        isLoading: false
+        isLoading: true
     )
     .padding()
     .background(.regularMaterial)

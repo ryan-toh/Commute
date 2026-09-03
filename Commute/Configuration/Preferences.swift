@@ -1,3 +1,10 @@
+//
+//  Preferences.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
 import CoreGraphics
 import CoreLocation
 import Foundation
@@ -98,6 +105,9 @@ enum Preferences {
         static let stopNavigation = "Stop"
         static let rerouting = "Finding a safer route…"
         static let arrived = "You have arrived"
+        static let reroutingStatusColor = Color.orange
+        static let arrivalStatusColor = Color.green
+        static let navigationFailureStatusColor = Color.red
         static let remainingDistanceFormat = "%.0f m remaining"
         static let stepDistanceFormat = "%.0f m"
         static let destinationSymbol = "mappin.circle.fill"
@@ -108,11 +118,6 @@ enum Preferences {
 
     enum MainLayout {
         static let searchTopPadding: CGFloat = 8
-        static let compactHeightThreshold: CGFloat = 500
-        static let compactSearchResultsMaximumHeight: CGFloat = 160
-        static let regularSearchResultsMaximumHeight: CGFloat = 320
-        static let regularWidthRoutePanelMaximumWidth: CGFloat = 640
-        static let routePanelHorizontalMargin: CGFloat = 32
     }
 
     enum MapLayers {
@@ -259,6 +264,14 @@ enum Preferences {
         static let routeEditorTitle = "Cycling path editor"
         static let openRouteComparisonTitle = "Compare routes"
         static let openCyclingPathEditorTitle = "Draw and upload path"
+        static let uikitTestTitle = "UIKit test"
+        static let openUIKitTestTitle = "Open UIKit test"
+        static let uikitTestDescription = "This screen is a UIKit view controller hosted by SwiftUI."
+        static let uikitTestMinimumValue: Float = 0
+        static let uikitTestMaximumValue: Float = 100
+        static let uikitTestInitialValue: Float = 50
+        static let uikitTestValueFormat = "UIKit slider value: %d"
+        static let uikitTestControlSpacing: CGFloat = 24
         static let routeEditorSymbol = "point.topleft.down.to.point.bottomright.curvepath"
         static let routeEditorInstructions = "Tap the map to draw the cycling path. Add at least two points, then upload it to the development service."
         static let routeEditorNamePrompt = "Path name (optional)"
@@ -325,7 +338,6 @@ enum Preferences {
         static let searchPrompt = "Search for a destination"
         static let noResultsMessage = "No destinations found."
         static let searchErrorMessage = "Unable to search for destinations."
-        static let resultsMaximumHeight: CGFloat = 320
         static let containerCornerRadius: CGFloat = 32
         static let overlayPadding: CGFloat = 24
         static let containerPadding: CGFloat = 0

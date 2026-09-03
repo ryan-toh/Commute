@@ -37,6 +37,8 @@ final class CyclingPathRoutePlanningService: RoutePlanningService {
         to destination: Location
     ) async throws -> CyclingPathRoutePlanningResult {
         let directRoute: Route
+
+        // try a direct route, find the nearest routable destination otherwise
         do {
             directRoute = try await directRoutePlanningService.planCyclingRoute(
                 from: origin,
@@ -52,17 +54,21 @@ final class CyclingPathRoutePlanningService: RoutePlanningService {
             return CyclingPathRoutePlanningResult(route: fallbackRoute, trace: .empty)
         }
 
+        // cycling path repository not initialised
         guard cyclingPathRepository.isPrepared,
               !cyclingPathRepository.network.edgesByID.isEmpty else {
             return CyclingPathRoutePlanningResult(route: directRoute, trace: .empty)
         }
-
+        
+        // find breakpoints in Cycling Path Segments that we can escape for a shorter route
         let excursionSearch = candidateExcursionSearch.findExcursions(
             near: directRoute,
             destinationCoordinate: destination.coordinate,
             in: cyclingPathRepository.network,
             configuration: makeCandidateExcursionSearchConfiguration()
         )
+        
+        // choose only the top candidates
         let candidateEvaluation = try await evaluateCandidates(
             excursionSearch.excursions,
             from: origin,
@@ -72,7 +78,9 @@ final class CyclingPathRoutePlanningService: RoutePlanningService {
         let preferredCandidate = candidateRanker.preferredCandidate(
             from: candidateEvaluation.acceptedCandidates
         )
+        
         let selectedRoute: Route
+        
         if let preferredCandidate {
             selectedRoute = routeAssembler.assembleRoute(from: preferredCandidate)
         } else {
@@ -185,6 +193,7 @@ final class CyclingPathRoutePlanningService: RoutePlanningService {
     ) async throws -> Route? {
         guard cyclingPathRepository.isPrepared else { return nil }
 
+        // get the nearest fallbackCandidate
         let fallbackCandidates = cyclingPathRepository.candidateSegments(
             near: destination.coordinate,
             within: Preferences.RoutePlanning.destinationFallbackSearchRadiusMeters

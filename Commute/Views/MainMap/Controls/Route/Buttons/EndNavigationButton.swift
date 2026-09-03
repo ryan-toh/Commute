@@ -1,8 +1,14 @@
+//
+//  EndNavigationButton.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
 import SwiftUI
 
 /// Provides a large, deliberate control for ending an active cycling session.
 struct EndNavigationButton: View {
-    
     // MARK: - Data In
     let action: () -> Void
 

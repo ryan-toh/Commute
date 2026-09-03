@@ -14,7 +14,7 @@ final class RouteNavigationViewModel {
     // MARK: - Observable Data
     private(set) var destination: Location?
     private(set) var activeRoute: Route?
-    private(set) var state: UserRouteState = .idle
+    private(set) var currentState: UserRouteState = .idle
     private(set) var progress: RouteProgress?
     private(set) var navigationError: Error?
 
@@ -52,7 +52,7 @@ final class RouteNavigationViewModel {
         progress = nil
         navigationError = nil
         lastRerouteDate = nil
-        state = .following
+        currentState = .following
         
         // start navigation session
         let monitoringID = UUID()
@@ -68,8 +68,8 @@ final class RouteNavigationViewModel {
         monitoringTask?.cancel()
         monitoringTask = nil
 
-        if state == .following || state == .rerouting || state == .failed {
-            state = .stopped
+        if currentState == .following || currentState == .rerouting || currentState == .failed {
+            currentState = .stopped
         }
     }
 
@@ -83,7 +83,7 @@ final class RouteNavigationViewModel {
         progress = nil
         navigationError = nil
         lastRerouteDate = nil
-        state = .idle
+        currentState = .idle
     }
 
     /**
@@ -108,13 +108,13 @@ final class RouteNavigationViewModel {
             
             guard self.monitoringID == monitoringID, !Task.isCancelled else { return }
             navigationError = locationAccessError(for: locationProvider)
-            state = .failed
+            currentState = .failed
         } catch is CancellationError {
             // Stopping navigation intentionally cancels this task.
         } catch {
             guard self.monitoringID == monitoringID else { return }
             navigationError = error
-            state = .failed
+            currentState = .failed
         }
     }
 
@@ -136,7 +136,7 @@ final class RouteNavigationViewModel {
 
         // stop updating if we arrive at destination
         if routeProgress.remainingDistanceMeters <= Preferences.NavigationSession.arrivalThresholdMeters {
-            state = .arrived
+            currentState = .arrived
             stopNavigation()
             return false
         }
@@ -144,13 +144,13 @@ final class RouteNavigationViewModel {
         // reroute if we can reroute and are too far away
         let isOffRoute = routeProgress.distanceFromRouteMeters
             > Preferences.NavigationSession.offRouteThresholdMeters
-        let isCurrentlyFollowingRoute = state == .following
+        let isCurrentlyFollowingRoute = currentState == .following
             
         if isOffRoute, isCurrentlyFollowingRoute, canReroute {
             await reroute(from: location, monitoringID: monitoringID)
         }
         
-        return state != .failed
+        return currentState != .failed
     }
 
     private var canReroute: Bool {
@@ -161,7 +161,7 @@ final class RouteNavigationViewModel {
     private func reroute(from origin: Location, monitoringID: UUID) async {
         guard let destination else { return }
 
-        state = .rerouting
+        currentState = .rerouting
         lastRerouteDate = .now
 
         do {
@@ -170,12 +170,12 @@ final class RouteNavigationViewModel {
 
             activeRoute = reroutedRoute
             progress = nil
-            state = .following
+            currentState = .following
         } catch {
             guard self.monitoringID == monitoringID, !Task.isCancelled else { return }
 
             navigationError = error
-            state = .failed
+            currentState = .failed
         }
     }
 

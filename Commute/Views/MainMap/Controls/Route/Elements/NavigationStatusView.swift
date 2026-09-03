@@ -1,8 +1,14 @@
+//
+//  NavigationStatusView.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
 import SwiftUI
 
 /// Displays a temporary navigation status in place of next-maneuver guidance.
 struct NavigationStatusView: View {
-    
     // MARK: - Data In
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let title: String
@@ -10,7 +16,7 @@ struct NavigationStatusView: View {
     let symbolColor: Color
     let showsProgress: Bool
     
-    // MARK: - Data Owned By Me
+    // MARK: - Data owned by Me
     @State private var hasAppeared = false
 
     var body: some View {

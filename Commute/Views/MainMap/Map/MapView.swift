@@ -1,3 +1,10 @@
+//
+//  MapView.swift
+//  Commute
+//
+//  Created by Ryan on 28/8/26.
+//
+
 import SwiftUI
 import MapKit
 
@@ -18,14 +25,14 @@ struct MapView: View {
 
     // MARK: - Data In
     private var displayedRoute: Route? {
-        routeNavigationViewModel.state.isNavigating
+        routeNavigationViewModel.currentState.isNavigating
             ? routeNavigationViewModel.activeRoute
             : routePlanningViewModel.route
     }
 
     // MARK: - Data In
     private var displayedDestination: Location? {
-        routeNavigationViewModel.state.isNavigating
+        routeNavigationViewModel.currentState.isNavigating
             ? routeNavigationViewModel.destination
             : routePlanningViewModel.destination
     }
@@ -52,7 +59,7 @@ struct MapView: View {
                 .mapStyle(mapLayerViewModel.isSatelliteStyleEnabled ? .imagery : .standard)
                 .simultaneousGesture(
                     destinationSelectionGesture(using: mapProxy),
-                    including: routeNavigationViewModel.state.isNavigating ? .none : .all
+                    including: routeNavigationViewModel.currentState.isNavigating ? .none : .all
                 )
                 .onMapCameraChange(frequency: .onEnd) { context in
                     mapViewModel.updateVisibleSearchArea(from: context.region)
@@ -69,7 +76,7 @@ struct MapView: View {
             }
         }
         .onTapGesture {
-            guard !routeNavigationViewModel.state.isNavigating,
+            guard !routeNavigationViewModel.currentState.isNavigating,
                   routePlanningViewModel.destination != nil else { return }
             onDestinationDismissed()
         }
@@ -101,7 +108,7 @@ struct MapView: View {
     }
 
     private var navigationCameraBounds: MapCameraBounds? {
-        guard routeNavigationViewModel.state.isNavigating else { return nil }
+        guard routeNavigationViewModel.currentState.isNavigating else { return nil }
 
         return MapCameraBounds(
             minimumDistance: Preferences.NavigationCamera.minimumDistanceMeters,

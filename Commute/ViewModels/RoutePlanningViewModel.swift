@@ -52,14 +52,26 @@ final class RoutePlanningViewModel {
         planningTask?.cancel()
 
         let requestID = UUID()
-        let task = Task { [routePlanningService] in
-            try await routePlanningService.planCyclingRoute(from: origin, to: destination)
-        }
         planningRequestID = requestID
-        planningTask = task
         route = nil
         isPlanningRoute = true
         routeError = nil
+        
+        // temporary fix: wait for swiftUI to animate before routing
+        do {
+            try await Task.sleep(for: .milliseconds(150))
+        } catch is CancellationError {
+            return nil
+        } catch {
+            return nil
+        }
+
+        guard planningRequestID == requestID, !Task.isCancelled else { return nil }
+
+        let task = Task { [routePlanningService] in
+            try await routePlanningService.planCyclingRoute(from: origin, to: destination)
+        }
+        planningTask = task
 
         do {
             let route = try await task.value

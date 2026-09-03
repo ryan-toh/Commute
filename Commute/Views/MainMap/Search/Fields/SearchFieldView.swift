@@ -1,5 +1,5 @@
 //
-//  SearchField.swift
+//  SearchFieldView.swift
 //  Commute
 //
 //  Created by Ryan on 29/8/26.
@@ -7,9 +7,11 @@
 
 import SwiftUI
 
-
 struct SearchFieldView: View {
+    // MARK: - Data shared with Me
     @Binding var query: String
+    
+    // MARK: - Data In
     let isFocused: FocusState<Bool>.Binding
     let onQueryChanged: (String) -> Void
 

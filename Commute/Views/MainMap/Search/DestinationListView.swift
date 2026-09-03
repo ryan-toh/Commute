@@ -8,34 +8,43 @@
 import SwiftUI
 
 struct DestinationListView: View {
+    // MARK: - Data In
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let results: [Location]
-    let maximumHeight: CGFloat
     let onDestinationSelected: (Location) -> Void
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: Preferences.DestinationSearch.resultListSpacing) {
-                ForEach(results) { result in
-                    DestinationListItemView(
-                        destination: result,
-                        onDestinationSelected: onDestinationSelected
-                    )
-                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .top)))
-                }
+        ViewThatFits(in: .vertical) {
+            destinationRows
+                .fixedSize(horizontal: false, vertical: true)
+
+            ScrollView {
+                destinationRows
             }
         }
-        .frame(maxHeight: maximumHeight)
         .animation(
             reduceMotion ? nil : Preferences.DestinationSearch.listExpansionAnimation,
             value: results.map(\.id)
         )
     }
+
+    private var destinationRows: some View {
+        LazyVStack(alignment: .leading, spacing: Preferences.DestinationSearch.resultListSpacing) {
+            ForEach(results) { result in
+                DestinationListItemView(
+                    destination: result,
+                    onDestinationSelected: onDestinationSelected
+                )
+                .transition(
+                    reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .top))
+                )
+            }
+        }
+    }
 }
 
 #Preview {
     DestinationListView(
-        results: [],
-        maximumHeight: Preferences.DestinationSearch.resultsMaximumHeight
+        results: []
     ) { _ in }
 }

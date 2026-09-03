@@ -1,6 +1,14 @@
+//
+//  RoutePlanningView.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
 import SwiftUI
 
 struct RoutePlanningView: View {
+    // MARK: - Data In
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let viewModel: RoutePlanningViewModel
     let onPlanRoute: () -> Void
@@ -28,7 +36,7 @@ struct RoutePlanningView: View {
                 .accessibilityLabel(Preferences.PlaceDetail.closeAccessibilityLabel)
             }
 
-            SelectedPlaceCardView(
+            PlaceCardView(
                 details: viewModel.placeDetails ?? PlaceDetails(location: destination),
                 route: viewModel.route,
                 isLoading: viewModel.isLoadingPlaceDetails

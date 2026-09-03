@@ -1,13 +1,22 @@
+//
+//  MapLayerPickerView.swift
+//  Commute
+//
+//  Created by Ryan on 1/9/26.
+//
+
 import SwiftUI
 
 /// Lets the user select one or more optional map layers.
-struct MapLayerPickerView: View {
+struct MapLayerButton: View {
+    // MARK: - Data In
     let enabledLayers: Set<MapLayer>
     let isSatelliteStyleEnabled: Bool
     let onLayerEnabledChanged: (MapLayer, Bool) -> Void
     let onSatelliteStyleEnabledChanged: (Bool) -> Void
+    
+    // MARK: - Data owned by Me
     @State private var isExpanded = false
-
     private let selectableLayers: [MapLayer] = [
         .cyclingPaths,
         .userLocation
@@ -20,7 +29,7 @@ struct MapLayerPickerView: View {
         }
         .animation(Preferences.MapLayers.pickerLayerAnimation, value: isExpanded)
     }
-
+    
     private var pickerButton: some View {
         Button {
             isExpanded.toggle()
@@ -39,6 +48,8 @@ struct MapLayerPickerView: View {
                 : Preferences.MapLayers.pickerExpansionAccessibilityHint
         )
     }
+    
+
 
     private var layerArc: some View {
         Group {

@@ -11,6 +11,7 @@ import SwiftData
 
 @main
 struct CommuteApp: App {
+    // MARK: - Data owned by Me
     @State private var locationManager: UserLocationManager
     @State private var userLocationViewModel: UserLocationViewModel
     @State private var destinationSearchViewModel: DestinationSearchViewModel
@@ -18,6 +19,9 @@ struct CommuteApp: App {
     @State private var mapLayerViewModel: MapLayerViewModel
     @State private var navigationViewModel: RoutePlanningViewModel
     @State private var navigationSessionViewModel: RouteNavigationViewModel
+    @State private var mainViewModel: MainViewModel
+    
+    // MARK: - Data owned by Me
     private let cyclingPathModelContainer: ModelContainer
 
     init() {
@@ -52,6 +56,15 @@ struct CommuteApp: App {
             routePlanningService: routePlanningService,
             routeProgressCalculator: RouteProgressCalculator()
         )
+        let mainViewModel = MainViewModel(
+            locationManager: locationManager,
+            userLocationViewModel: userLocationViewModel,
+            destinationSearchViewModel: destinationSearchViewModel,
+            cyclingPathRepository: cyclingPathRepository,
+            mapLayerViewModel: mapLayerViewModel,
+            routePlanningViewModel: navigationViewModel,
+            routeNavigationViewModel: navigationSessionViewModel
+        )
 
         _locationManager = State(initialValue: locationManager)
         _userLocationViewModel = State(initialValue: userLocationViewModel)
@@ -60,6 +73,7 @@ struct CommuteApp: App {
         _mapLayerViewModel = State(initialValue: mapLayerViewModel)
         _navigationViewModel = State(initialValue: navigationViewModel)
         _navigationSessionViewModel = State(initialValue: navigationSessionViewModel)
+        _mainViewModel = State(initialValue: mainViewModel)
         self.cyclingPathModelContainer = cyclingPathModelContainer
     }
 
@@ -73,6 +87,7 @@ struct CommuteApp: App {
                 .environment(mapLayerViewModel)
                 .environment(navigationViewModel)
                 .environment(navigationSessionViewModel)
+                .environment(mainViewModel)
                 .modelContainer(cyclingPathModelContainer)
         }
     }

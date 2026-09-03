@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct DestinationListItemView: View {
+    // MARK: - Data In
     let destination: Location
     let onDestinationSelected: (Location) -> Void
 

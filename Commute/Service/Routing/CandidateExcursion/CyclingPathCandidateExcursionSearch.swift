@@ -1,3 +1,10 @@
+//
+//  CyclingPathCandidateExcursionSearch.swift
+//  Commute
+//
+//  Created by Ryan on 2/9/26.
+//
+
 import Foundation
 
 /// All limits used while converting a permanent cycling-path network into a

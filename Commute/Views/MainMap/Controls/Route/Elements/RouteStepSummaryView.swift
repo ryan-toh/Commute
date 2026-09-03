@@ -1,8 +1,14 @@
+//
+//  RouteStepSummaryView.swift
+//  Commute
+//
+//  Created by Ryan on 26/8/26.
+//
+
 import SwiftUI
 
 /// Displays the remaining trip distance without competing with the next maneuver.
 struct RouteStepSummaryView: View {
-    
     // MARK: - Data In
     let progress: RouteProgress
 

@@ -1,10 +1,19 @@
+//
+//  DestinationSearchView.swift
+//  Commute
+//
+//  Created by Ryan on 29/8/26.
+//
+
 import SwiftUI
 
 struct DestinationSearchView: View {
+    // MARK: - Data In
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
+    // MARK: - Data In
     let viewModel: DestinationSearchViewModel
     let isSearchFocused: FocusState<Bool>.Binding
-    let maximumResultsHeight: CGFloat
     let onDestinationSelected: (Location) -> Void
 
     var body: some View {
@@ -99,7 +108,6 @@ struct DestinationSearchView: View {
             } else {
                 DestinationListView(
                     results: viewModel.results,
-                    maximumHeight: maximumResultsHeight,
                     onDestinationSelected: selectDestination
                 )
             }
@@ -120,7 +128,6 @@ struct DestinationSearchView: View {
     DestinationSearchView(
         viewModel: destinationSearchViewModel,
         isSearchFocused: $isSearchFocused,
-        maximumResultsHeight: Preferences.DestinationSearch.resultsMaximumHeight,
         onDestinationSelected: { _ in }
     )
 }
